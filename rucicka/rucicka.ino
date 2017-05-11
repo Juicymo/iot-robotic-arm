@@ -143,21 +143,22 @@ void setup()
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
   
-  tmpx = parkx;
-  tmpy = parky;
-  tmpz = parkz;
-  tmpg = parkg;
-  tmpwr = parkwr;
-  tmpwa = parkwa;
-  
-  X = parkx;
-  Y = parky;
-  Z = parkz;
-  G = parkg;
-  WR = parkwr;
-  WA = parkwa;
-  
-  Arm(parkx, parky, parkz, parkg, parkwa, parkwr);
+//  tmpx = parkx;
+//  tmpy = parky;
+//  tmpz = parkz;
+//  tmpg = parkg;
+//  tmpwr = parkwr;
+//  tmpwa = parkwa;
+//  
+//  X = parkx;
+//  Y = parky;
+//  Z = parkz;
+//  G = parkg;
+//  WR = parkwr;
+//  WA = parkwa;
+
+  Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
+  //Arm(parkx, parky, parkz, parkg, parkwa, parkwr);
 }
 
 const float posDeltaX = 0.25;
