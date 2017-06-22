@@ -69,8 +69,12 @@ float tmpx = 2.25;
 float tmpy = 5;
 float tmpz = 77.5;
 int tmpg = 65;
-int tmpwr = 80;
 float tmpwa = 15;
+int tmpwr = 80;
+
+// elbow shoulder wrist base gripper wrist_rotate
+// 85 110 90 70 40 86 = pravouhly
+// 50 140 90 70 40 86 = default
 
 // Arm park pos
 float parkx = 1.25;
@@ -90,47 +94,73 @@ float tarwa = 20;
 
 //boolean mode = true;
 
-int Arm(float x, float y, float z, int g, float wa, int wr) // Here's all the Inverse Kinematics to control the arm
+struct Result {
+  float elbow;
+  float shoulder;
+  float wrist;
+};
+
+Result compute(float x, float y, float wa)
 {
   float M = sqrt((y*y)+(x*x));
   if(M <= 0)
-    return 1;
+    return Result { 0, 0, 0 };
   float A1 = atan(y/x);
   if(x <= 0)
-    return 1;
+    return Result { 0, 0, 0 };
   float A2 = acos((A*A-B*B+M*M)/((A*2)*M));
   float Elbow = acos((A*A+B*B-M*M)/((A*2)*B));
   float Shoulder = A1 + A2;
   Elbow = Elbow * rtod;
   Shoulder = Shoulder * rtod;
   if((int)Elbow <= 0 || (int)Shoulder <= 0)
-    return 1;
+    return Result { 0, 0, 0 };
+
   float Wris = abs(wa - Elbow - Shoulder) - 90;
+
+  Result res = { Elbow, Shoulder, Wris };
+
+  return res;
+}
+
+int Arm(float x, float y, float z, int g, float wa, int wr) // Here's all the Inverse Kinematics to control the arm
+{
+  Result res = compute(x, y, wa);
+
+  if (!res.wrist && !res.shoulder && !res.elbow) {
+    return 1;
+  }
+
+  move(res.elbow, res.shoulder, res.wrist, z, g, wr);
+}
+
+void move(float elbow, float shoulder, float wrist, int z, int g, int wr) {
 #ifdef DIGITAL_RANGE
-  Elb.writeMicroseconds(map(180 - Elbow, 0, 180, 900, 2100  ));
-  Shldr.writeMicroseconds(map(Shoulder, 0, 180, 900, 2100));
+  Elb.writeMicroseconds(map(180 - elbow, 0, 180, 900, 2100));
+  Shldr.writeMicroseconds(map(shoulder, 0, 180, 900, 2100));
 #else
-  Elb.write(180 - Elbow);
-  Shldr.write(Shoulder);
+  Elb.write(180 - elbow);
+  Shldr.write(shoulder);
 #endif
-  Wrist.write(180 - Wris);
+
+  Wrist.write(180 - wrist);
   Base.write(z);
   WristR.write(wr);
+  
 #ifndef FSRG
   Gripper.write(g);
 #endif
+  
   Y = tmpy;
   X = tmpx;
   Z = tmpz;
   WA = tmpwa;
+  
 #ifndef FSRG
   G = tmpg;
 #endif
-  return 0; 
-}
 
-void reachPosition(float x, float y, float z, int g, float wa, int wr) {
-  
+  return 0; 
 }
 
 void setup()
@@ -142,20 +172,6 @@ void setup()
   Wrist.attach(Wrist_pin);
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
-  
-//  tmpx = parkx;
-//  tmpy = parky;
-//  tmpz = parkz;
-//  tmpg = parkg;
-//  tmpwr = parkwr;
-//  tmpwa = parkwa;
-//  
-//  X = parkx;
-//  Y = parky;
-//  Z = parkz;
-//  G = parkg;
-//  WR = parkwr;
-//  WA = parkwa;
 
   Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
   //Arm(parkx, parky, parkz, parkg, parkwa, parkwr);
@@ -187,73 +203,23 @@ void loop()
 {
   if(Serial.available() > 0)
   {
-    // Read character
-    action = Serial.read();
-    if(action > 0)
-    {
-      // Set action
-      switch(action)
-      {
-        case actionUp:
-        tmpy += posDeltaY;
-        break;
-        
-        case actionDown:
-        tmpy -= posDeltaY;
-        break;
-        
-        case actionLeft:
-        tmpx += posDeltaX;
-        break;
-        
-        case actionRight:
-        tmpx -= posDeltaX;
-        break;
-        
-        case actionRotCW:
-        tmpz += posDeltaZ;
-        break;
-        
-        case actionRotCCW:
-        tmpz -= posDeltaZ;
-        break;
-        
-        case actionGripperOpen:
-        tmpg += posDeltaG;
-        break;
-        
-        case actionGripperClose:
-        tmpg -= posDeltaG;
-        break;
-        
-        case actionWristUp:
-        tmpwa += posDeltaWa;
-        break;
-        
-        case actionWristDown:
-        tmpwa -= posDeltaWa;
-        break;
-        
-        case actionWristRotCW:
-        tmpwr += posDeltaWr;
-        break;
-        
-        case actionWristRotCCW:
-        tmpwr -= posDeltaWr;
-        break;
-      }
-      
+      float elbow = Serial.parseFloat();
+      float shoulder = Serial.parseFloat();
+      float wrist = Serial.parseFloat();
+      int z = Serial.parseInt();
+      int g = Serial.parseInt();
+      int wr = Serial.parseInt();
       // Display position
-      Serial.print("tmpx = "); Serial.print(tmpx, DEC); Serial.print("\ttmpy = "); Serial.print(tmpy, DEC); Serial.print("\ttmpz = "); Serial.print(tmpz, DEC); Serial.print("\ttmpg = "); Serial.print(tmpg, DEC); Serial.print("\ttmpwa = "); Serial.print(tmpwa, DEC); Serial.print("\ttmpwr = "); Serial.println(tmpwr, DEC);
+      //Serial.print("tmpx = "); Serial.print(tmpx, DEC); Serial.print("\ttmpy = "); Serial.print(tmpy, DEC); Serial.print("\ttmpz = "); Serial.print(tmpz, DEC); Serial.print("\ttmpg = "); Serial.print(tmpg, DEC); Serial.print("\ttmpwa = "); Serial.print(tmpwa, DEC); Serial.print("\ttmpwr = "); Serial.println(tmpwr, DEC);
       
       // Move arm
-      Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
+      //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
+      move(elbow, shoulder, wrist, z, g, wr);
 
       //delay(100);
       // Pause for 100 ms between actions
       lastReferenceTime = millis();
       while(millis() <= (lastReferenceTime + 100)){};
-    }
   }
   //delay(1000);
 }
