@@ -203,23 +203,29 @@ void loop()
 {
   if(Serial.available() > 0)
   {
-      float elbow = Serial.parseFloat();
-      float shoulder = Serial.parseFloat();
-      float wrist = Serial.parseFloat();
-      int z = Serial.parseInt();
-      int g = Serial.parseInt();
-      int wr = Serial.parseInt();
-      // Display position
-      //Serial.print("tmpx = "); Serial.print(tmpx, DEC); Serial.print("\ttmpy = "); Serial.print(tmpy, DEC); Serial.print("\ttmpz = "); Serial.print(tmpz, DEC); Serial.print("\ttmpg = "); Serial.print(tmpg, DEC); Serial.print("\ttmpwa = "); Serial.print(tmpwa, DEC); Serial.print("\ttmpwr = "); Serial.println(tmpwr, DEC);
-      
-      // Move arm
-      //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
-      move(elbow, shoulder, wrist, z, g, wr);
-
-      //delay(100);
-      // Pause for 100 ms between actions
-      lastReferenceTime = millis();
-      while(millis() <= (lastReferenceTime + 100)){};
+      if(Serial.readString() == "|")
+      {      
+        float elbow = Serial.parseFloat();
+        float shoulder = Serial.parseFloat();
+        float wrist = Serial.parseFloat();
+        int z = Serial.parseInt();
+        int g = Serial.parseInt();
+        int wr = Serial.parseInt();
+        // Display position
+        //Serial.print("tmpx = "); Serial.print(tmpx, DEC); Serial.print("\ttmpy = "); Serial.print(tmpy, DEC); Serial.print("\ttmpz = "); Serial.print(tmpz, DEC); Serial.print("\ttmpg = "); Serial.print(tmpg, DEC); Serial.print("\ttmpwa = "); Serial.print(tmpwa, DEC); Serial.print("\ttmpwr = "); Serial.println(tmpwr, DEC);
+        
+        // Move arm
+        //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
+        if(Serial.readString() == "|")
+        {
+          move(elbow, shoulder, wrist, z, g, wr);
+    
+          //delay(100);
+          // Pause for 100 ms between actions
+          lastReferenceTime = millis();
+          while(millis() <= (lastReferenceTime + 100)){};
+        }
+      }
   }
   //delay(1000);
 }
