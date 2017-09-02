@@ -1,8 +1,4 @@
-//#if ARDUINO >= 100
 #include "Arduino.h"
-//#else
-//#include "WProgram.h"
-//#end if
 
 #include <Servo.h>
 #include <math.h>
@@ -29,6 +25,20 @@ const float B = 5.00;
 const float A = 5.75;
 const float B = 7.375;
 #endif
+
+#define MIN_ELBOW 19
+#define MIN_SHOULDER 110
+#define MIN_WRIST 80
+#define MIN_BASE 70
+#define MIN_GRIPPER 40
+#define MIN_WRIST_ROTATE 86
+
+#define MAX_ELBOW 90
+#define MAX_SHOULDER 170
+#define MAX_WRIST 100
+#define MAX_BASE 70
+#define MAX_GRIPPER 40
+#define MAX_WRIST_ROTATE 86
 
 //Arm Servo pins
 #define Base_pin 2
@@ -100,8 +110,7 @@ struct Result {
   float wrist;
 };
 
-Result compute(float x, float y, float wa)
-{
+Result compute(float x, float y, float wa) {
   float M = sqrt((y*y)+(x*x));
   if(M <= 0)
     return Result { 0, 0, 0 };
@@ -123,8 +132,7 @@ Result compute(float x, float y, float wa)
   return res;
 }
 
-int Arm(float x, float y, float z, int g, float wa, int wr) // Here's all the Inverse Kinematics to control the arm
-{
+int Arm(float x, float y, float z, int g, float wa, int wr) { // Here's all the Inverse Kinematics to control the arm
   Result res = compute(x, y, wa);
 
   if (!res.wrist && !res.shoulder && !res.elbow) {
@@ -160,12 +168,27 @@ void move(float elbow, float shoulder, float wrist, int z, int g, int wr) {
   G = tmpg;
 #endif
 
-  return 0; 
+  return 0;
 }
 
-void setup()
-{
+void printDouble( double val, unsigned int precision) {
+// prints val with number of decimal places determine by precision
+// NOTE: precision is 1 followed by the number of zeros for the desired number of decimial places
+// example: printDouble( 3.1415, 100); // prints 3.14 (two decimal places)
+
+   Serial.print (int(val));  //prints the int part
+   Serial.print("."); // print the decimal point
+   unsigned int frac;
+   if(val >= 0)
+       frac = (val - int(val)) * precision;
+   else
+       frac = (int(val)- val ) * precision;
+   Serial.print(frac, DEC) ;
+}
+
+void setup() {
   Serial.begin(9600);
+  
   Base.attach(Base_pin);
   Shldr.attach(Shoulder_pin);
   Elb.attach(Elbow_pin);
@@ -173,7 +196,30 @@ void setup()
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
 
-  Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
+  float elbow = 19.0;
+  float shoulder = 170.0;
+  float wrist = 80;
+  int z = 70;
+  int g = 40;
+  int wr = 86;
+  
+  // Display position
+  printDouble(elbow, 100);
+  Serial.print(" ");
+  printDouble(shoulder, 100);
+  Serial.print(" ");
+  printDouble(wrist, 100);
+  Serial.print(" ");
+  Serial.print(z, DEC);
+  Serial.print(" ");
+  Serial.print(g, DEC);
+  Serial.print(" ");
+  Serial.println(wr, DEC);
+  
+  // Move arm
+  move(elbow, shoulder, wrist, z, g, wr);
+
+  //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
   //Arm(parkx, parky, parkz, parkg, parkwa, parkwr);
 }
 
@@ -199,27 +245,33 @@ unsigned char action;
 #define actionWristRotCW 103        // g
 #define actionWristRotCCW 102       // f
 
-void loop()
-{
-  if(Serial.available() > 0)
-  {
+void loop() {
+  if (Serial.available() > 0) {
       float elbow = Serial.parseFloat();
       float shoulder = Serial.parseFloat();
       float wrist = Serial.parseFloat();
       int z = Serial.parseInt();
       int g = Serial.parseInt();
       int wr = Serial.parseInt();
+      
       // Display position
-      //Serial.print("tmpx = "); Serial.print(tmpx, DEC); Serial.print("\ttmpy = "); Serial.print(tmpy, DEC); Serial.print("\ttmpz = "); Serial.print(tmpz, DEC); Serial.print("\ttmpg = "); Serial.print(tmpg, DEC); Serial.print("\ttmpwa = "); Serial.print(tmpwa, DEC); Serial.print("\ttmpwr = "); Serial.println(tmpwr, DEC);
+      printDouble(elbow, 100);
+      Serial.print(" ");
+      printDouble(shoulder, 100);
+      Serial.print(" ");
+      printDouble(wrist, 100);
+      Serial.print(" ");
+      Serial.print(z, DEC);
+      Serial.print(" ");
+      Serial.print(g, DEC);
+      Serial.print(" ");
+      Serial.println(wr, DEC);
       
       // Move arm
-      //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
       move(elbow, shoulder, wrist, z, g, wr);
 
-      //delay(100);
       // Pause for 100 ms between actions
       lastReferenceTime = millis();
       while(millis() <= (lastReferenceTime + 100)){};
   }
-  //delay(1000);
 }
