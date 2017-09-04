@@ -40,7 +40,9 @@ const float B = 7.375;
 #define MAX_GRIPPER 40
 #define MAX_WRIST_ROTATE 86
 
-//Arm Servo pins
+#define MAX_STRING_LEN  20
+
+// Arm Servo pins
 #define Base_pin 2
 #define Shoulder_pin 3
 #define Elbow_pin 4
@@ -48,15 +50,12 @@ const float B = 7.375;
 #define Gripper_pin 11
 #define WristR_pin 12
 
-//Onboard Speaker
+// Onboard Speaker
 #define Speaker_pin 5
+#define PIN_LED 13
 
-//Radians to Degrees constant
+// Radians to Degrees constant
 const float rtod = 57.295779;
-
-//Arm Speed Variables
-float Speed = 1.0;
-int sps = 3;
 
 //Servo Objects
 Servo Elb;
@@ -66,43 +65,9 @@ Servo Base;
 Servo Gripper;
 Servo WristR;
 
-// Arm Current Pos
-float X = 2;
-float Y = 1.25;
-float Z = 77.5;
-int G = 65;
-float WA = -10;
-int WR = 80;
-
-// Arm temp pos
-float tmpx = 2.25;
-float tmpy = 5;
-float tmpz = 77.5;
-int tmpg = 65;
-float tmpwa = 15;
-int tmpwr = 80;
-
 // elbow shoulder wrist base gripper wrist_rotate
 // 85 110 90 70 40 86 = pravouhly
 // 50 140 90 70 40 86 = default
-
-// Arm park pos
-float parkx = 1.25;
-float parky = 2.25;
-float parkz = 77.5;
-int parkg = 65;
-int parkwr = 80;
-float parkwa = 15;
-
-// Arm target pos
-float tarx = 1.50;
-float tary = 4.50;
-float tarz = 40.0;
-int targ = 65;
-int tarwr = 80;
-float tarwa = 20;
-
-//boolean mode = true;
 
 struct Result {
   float elbow;
@@ -110,39 +75,7 @@ struct Result {
   float wrist;
 };
 
-Result compute(float x, float y, float wa) {
-  float M = sqrt((y*y)+(x*x));
-  if(M <= 0)
-    return Result { 0, 0, 0 };
-  float A1 = atan(y/x);
-  if(x <= 0)
-    return Result { 0, 0, 0 };
-  float A2 = acos((A*A-B*B+M*M)/((A*2)*M));
-  float Elbow = acos((A*A+B*B-M*M)/((A*2)*B));
-  float Shoulder = A1 + A2;
-  Elbow = Elbow * rtod;
-  Shoulder = Shoulder * rtod;
-  if((int)Elbow <= 0 || (int)Shoulder <= 0)
-    return Result { 0, 0, 0 };
-
-  float Wris = abs(wa - Elbow - Shoulder) - 90;
-
-  Result res = { Elbow, Shoulder, Wris };
-
-  return res;
-}
-
-int Arm(float x, float y, float z, int g, float wa, int wr) { // Here's all the Inverse Kinematics to control the arm
-  Result res = compute(x, y, wa);
-
-  if (!res.wrist && !res.shoulder && !res.elbow) {
-    return 1;
-  }
-
-  move(res.elbow, res.shoulder, res.wrist, z, g, wr);
-}
-
-void move(float elbow, float shoulder, float wrist, int z, int g, int wr) {
+int move(int elbow, int shoulder, int wrist, int z, int g, int wr) {
 #ifdef DIGITAL_RANGE
   Elb.writeMicroseconds(map(180 - elbow, 0, 180, 900, 2100));
   Shldr.writeMicroseconds(map(shoulder, 0, 180, 900, 2100));
@@ -158,36 +91,22 @@ void move(float elbow, float shoulder, float wrist, int z, int g, int wr) {
 #ifndef FSRG
   Gripper.write(g);
 #endif
-  
-  Y = tmpy;
-  X = tmpx;
-  Z = tmpz;
-  WA = tmpwa;
-  
-#ifndef FSRG
-  G = tmpg;
-#endif
 
   return 0;
 }
 
-void printDouble( double val, unsigned int precision) {
-// prints val with number of decimal places determine by precision
-// NOTE: precision is 1 followed by the number of zeros for the desired number of decimial places
-// example: printDouble( 3.1415, 100); // prints 3.14 (two decimal places)
+const byte numChars = 32;
+char receivedChars[numChars];
+char *i;
 
-   Serial.print (int(val));  //prints the int part
-   Serial.print("."); // print the decimal point
-   unsigned int frac;
-   if(val >= 0)
-       frac = (val - int(val)) * precision;
-   else
-       frac = (int(val)- val ) * precision;
-   Serial.print(frac, DEC) ;
-}
+boolean newData = false;
+
+long lastReferenceTime;
 
 void setup() {
   Serial.begin(9600);
+  
+  pinMode(PIN_LED, OUTPUT);
   
   Base.attach(Base_pin);
   Shldr.attach(Shoulder_pin);
@@ -196,19 +115,21 @@ void setup() {
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
 
-  float elbow = 19.0;
-  float shoulder = 170.0;
-  float wrist = 80;
+  int elbow = 19;
+  int shoulder = 170;
+  int wrist = 80;
   int z = 70;
   int g = 40;
   int wr = 86;
   
+  while(!Serial.available()) { }
+  
   // Display position
-  printDouble(elbow, 100);
+  Serial.print(elbow, DEC);
   Serial.print(" ");
-  printDouble(shoulder, 100);
+  Serial.print(shoulder, DEC);
   Serial.print(" ");
-  printDouble(wrist, 100);
+  Serial.print(wrist, DEC);
   Serial.print(" ");
   Serial.print(z, DEC);
   Serial.print(" ");
@@ -218,60 +139,175 @@ void setup() {
   
   // Move arm
   move(elbow, shoulder, wrist, z, g, wr);
-
-  //Arm(tmpx, tmpy, tmpz, tmpg, tmpwa, tmpwr);
-  //Arm(parkx, parky, parkz, parkg, parkwa, parkwr);
+  
+  Serial.println("Arm is Ready");
 }
 
-const float posDeltaX = 0.25;
-const float posDeltaY = 0.25;
-const float posDeltaZ = 2.5;
-const float posDeltaWa = 2.5;
-const int posDeltaG = 5;
-const int posDeltaWr = 5;
-long lastReferenceTime;
-unsigned char action;
+void recvWithStartEndMarkers() {
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
 
-#define actionUp 119                // w
-#define actionDown 115              // s
-#define actionLeft 97               // a
-#define actionRight 100             // d
-#define actionRotCW 101             // e
-#define actionRotCCW 113            // q
-#define actionGripperOpen 114       // r
-#define actionGripperClose 116      // t
-#define actionWristUp 122           // z
-#define actionWristDown 120         // x
-#define actionWristRotCW 103        // g
-#define actionWristRotCCW 102       // f
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
+    }
+}
+
+char* subStr(char* str, char *delim, int index) {
+  char *act, *sub, *ptr;
+  static char copy[MAX_STRING_LEN];
+  int i;
+
+  // Since strtok consumes the first arg, make a copy
+  strcpy(copy, str);
+
+  for (i = 1, act = copy; i <= index; i++, act = NULL) {
+     //Serial.print(".");
+     sub = strtok_r(act, delim, &ptr);
+     if (sub == NULL) break;
+  }
+  
+  return sub;
+}
+
+void handleNewData() {
+    if (newData == true) {
+        digitalWrite(PIN_LED, HIGH);
+        
+        //Serial.print("// ");
+        //Serial.println(receivedChars);
+        
+        int raw_elbow     = atoi(subStr(receivedChars, ",", 1));
+        int raw_shoulder  = atoi(subStr(receivedChars, ",", 2));
+        int raw_wrist     = atoi(subStr(receivedChars, ",", 3));
+        int raw_z         = atoi(subStr(receivedChars, ",", 4));
+        int raw_g         = atoi(subStr(receivedChars, ",", 5));
+        int raw_wr        = atoi(subStr(receivedChars, ",", 6));
+        
+        // Serial.print(raw_elbow, DEC);
+        // Serial.print(",");
+        // Serial.print(raw_shoulder, DEC);
+        // Serial.print(",");
+        // Serial.print(raw_wrist, DEC);
+        // Serial.print(",");
+        // Serial.print(raw_z, DEC);
+        // Serial.print(",");
+        // Serial.print(raw_g, DEC);
+        // Serial.print(",");
+        // Serial.println(raw_wr, DEC);
+        
+        int elbow     = constrain(raw_elbow, MIN_ELBOW, MAX_ELBOW);
+        int shoulder  = constrain(raw_shoulder, MIN_SHOULDER, MAX_SHOULDER);
+        int wrist     = constrain(raw_wrist, MIN_WRIST, MAX_WRIST);
+        int z         = constrain(raw_z, MIN_BASE, MAX_BASE);
+        int g         = constrain(raw_g, MIN_GRIPPER, MAX_GRIPPER);
+        int wr        = constrain(raw_wr, MIN_WRIST_ROTATE, MAX_WRIST_ROTATE);
+        
+        // Display position
+        Serial.print(elbow, DEC);
+        Serial.print(",");
+        Serial.print(shoulder, DEC);
+        Serial.print(",");
+        Serial.print(wrist, DEC);
+        Serial.print(",");
+        Serial.print(z, DEC);
+        Serial.print(",");
+        Serial.print(g, DEC);
+        Serial.print(",");
+        Serial.println(wr, DEC);
+    
+        // Move arm
+        move(elbow, shoulder, wrist, z, g, wr);
+        
+        newData = false;
+        
+        digitalWrite(PIN_LED, LOW);
+    }
+}
 
 void loop() {
-  if (Serial.available() > 0) {
-      float elbow = Serial.parseFloat();
-      float shoulder = Serial.parseFloat();
-      float wrist = Serial.parseFloat();
-      int z = Serial.parseInt();
-      int g = Serial.parseInt();
-      int wr = Serial.parseInt();
-      
-      // Display position
-      printDouble(elbow, 100);
-      Serial.print(" ");
-      printDouble(shoulder, 100);
-      Serial.print(" ");
-      printDouble(wrist, 100);
-      Serial.print(" ");
-      Serial.print(z, DEC);
-      Serial.print(" ");
-      Serial.print(g, DEC);
-      Serial.print(" ");
-      Serial.println(wr, DEC);
-      
-      // Move arm
-      move(elbow, shoulder, wrist, z, g, wr);
-
-      // Pause for 100 ms between actions
-      lastReferenceTime = millis();
-      while(millis() <= (lastReferenceTime + 100)){};
-  }
+  recvWithStartEndMarkers();
+  handleNewData();
+  
+  // if (Serial.available() > 0) {
+  //     digitalWrite(PIN_LED, HIGH);
+  //
+  //     // byte number[1];
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte elbow     = constrain(number[0], MIN_ELBOW, MAX_ELBOW);
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte shoulder  = constrain(number[0], MIN_SHOULDER, MAX_SHOULDER);
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte wrist     = constrain(number[0], MIN_WRIST, MAX_WRIST);
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte z         = constrain(number[0], MIN_BASE, MAX_BASE);
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte g         = constrain(number[0], MIN_GRIPPER, MAX_GRIPPER);
+  //     //
+  //     // Serial.readBytes(number, 1);
+  //     // byte wr        = constrain(number[0], MIN_WRIST_ROTATE, MAX_WRIST_ROTATE);
+  //
+  //     int raw_elbow     = Serial.parseInt();
+  //     int raw_shoulder  = Serial.parseInt();
+  //     int raw_wrist     = Serial.parseInt();
+  //     int raw_z         = Serial.parseInt();
+  //     int raw_g         = Serial.parseInt();
+  //     int raw_wr        = Serial.parseInt();
+  //
+  //     int elbow     = constrain(raw_elbow, MIN_ELBOW, MAX_ELBOW);
+  //     int shoulder  = constrain(raw_shoulder, MIN_SHOULDER, MAX_SHOULDER);
+  //     int wrist     = constrain(raw_wrist, MIN_WRIST, MAX_WRIST);
+  //     int z         = constrain(raw_z, MIN_BASE, MAX_BASE);
+  //     int g         = constrain(raw_g, MIN_GRIPPER, MAX_GRIPPER);
+  //     int wr        = constrain(raw_wr, MIN_WRIST_ROTATE, MAX_WRIST_ROTATE);
+  //
+  //     // Display position
+  //     Serial.print(elbow, DEC);
+  //     Serial.print(" ");
+  //     Serial.print(shoulder, DEC);
+  //     Serial.print(" ");
+  //     Serial.print(wrist, DEC);
+  //     Serial.print(" ");
+  //     Serial.print(z, DEC);
+  //     Serial.print(" ");
+  //     Serial.print(g, DEC);
+  //     Serial.print(" ");
+  //     Serial.println(wr, DEC);
+  //
+  //     // Move arm
+  //     move(elbow, shoulder, wrist, z, g, wr);
+  //
+  //     // Pause for 100 ms between actions
+  //     lastReferenceTime = millis();
+  //     while(millis() <= (lastReferenceTime + 100)){};
+  //
+  //     digitalWrite(PIN_LED, LOW);
+  // }
 }

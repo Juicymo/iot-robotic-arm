@@ -1,5 +1,11 @@
 require 'rubyserial'
 
+class Array
+  def chr
+    self.map { |e| e.chr }
+  end
+end
+
 class Rucicka
   MIN_ELBOW = 19
   MIN_SHOULDER = 110
@@ -15,7 +21,7 @@ class Rucicka
   MAX_GRIPPER = 40
   MAX_WRIST_ROTATE = 86
   
-  STEP_INTERVAL = 0.3
+  STEP_INTERVAL = 0.05
   #STEP_INTERVAL = 1.1
 
   def initialize
@@ -34,7 +40,20 @@ class Rucicka
       gripper: 40,
       wrist_rotate: 86
     }
+    
+    sleep 1
+    
+    @serial.write("Hello\n")
+    
+    sleep 1
+    
     puts 'OK'
+    
+    response = receive
+    puts "<-  #{response}"
+    
+    response = receive
+    puts "<-  #{response}"
     
     puts 'Moving to `park` position'
     apply_preset(:park)
@@ -146,11 +165,6 @@ private
       end
 
       send(constrain(@coords))
-
-      sleep STEP_INTERVAL
-      
-      response = receive
-      puts "<- #{response}"
     end
 
     puts "Done"
@@ -168,8 +182,6 @@ private
     end
     
     send(constrain(@coords))
-    
-    sleep STEP_INTERVAL
   end
 
   def bound(value, min, max)
@@ -190,13 +202,26 @@ private
   end
 
   def send(coords)
-    data = "#{coords[:elbow]} #{coords[:shoulder]} #{coords[:wrist]} #{coords[:base]} #{coords[:gripper]} #{coords[:wrist_rotate]}"
-    puts "-> #{data}"
+    data = "<#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}>\n"
+    print "-> #{data}"
     @serial.write(data)
+    # @serial.write([
+    #   coords[:elbow],
+    #   coords[:shoulder],
+    #   coords[:wrist],
+    #   coords[:base],
+    #   coords[:gripper],
+    #   coords[:wrist_rotate]
+    # ].chr.to_s)
+    
+    sleep STEP_INTERVAL
+    
+    response = receive
+    puts "<-  #{response}"
   end
   
   def receive
-    @serial.read(20)
+    @serial.read(32)
   end
 end
 
