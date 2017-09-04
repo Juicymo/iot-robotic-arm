@@ -28,16 +28,16 @@ const float B = 7.375;
 
 #define MIN_ELBOW 19
 #define MIN_SHOULDER 110
-#define MIN_WRIST 80
-#define MIN_BASE 70
-#define MIN_GRIPPER 40
-#define MIN_WRIST_ROTATE 86
+#define MIN_WRIST 30
+#define MIN_BASE 40
+#define MIN_GRIPPER 30
+#define MIN_WRIST_ROTATE 0
 
 #define MAX_ELBOW 90
 #define MAX_SHOULDER 170
-#define MAX_WRIST 100
-#define MAX_BASE 70
-#define MAX_GRIPPER 40
+#define MAX_WRIST 120
+#define MAX_BASE 100
+#define MAX_GRIPPER 110
 #define MAX_WRIST_ROTATE 86
 
 #define MAX_STRING_LEN  20
@@ -121,6 +121,8 @@ void setup() {
   int z = 70;
   int g = 40;
   int wr = 86;
+  
+  move(elbow, shoulder, wrist, z, g, wr);
   
   while(!Serial.available()) { }
   
@@ -226,17 +228,17 @@ void handleNewData() {
         int wr        = constrain(raw_wr, MIN_WRIST_ROTATE, MAX_WRIST_ROTATE);
         
         // Display position
-        Serial.print(elbow, DEC);
-        Serial.print(",");
-        Serial.print(shoulder, DEC);
-        Serial.print(",");
-        Serial.print(wrist, DEC);
-        Serial.print(",");
-        Serial.print(z, DEC);
-        Serial.print(",");
-        Serial.print(g, DEC);
-        Serial.print(",");
-        Serial.println(wr, DEC);
+        // Serial.print(elbow, DEC);
+        // Serial.print(",");
+        // Serial.print(shoulder, DEC);
+        // Serial.print(",");
+        // Serial.print(wrist, DEC);
+        // Serial.print(",");
+        // Serial.print(z, DEC);
+        // Serial.print(",");
+        // Serial.print(g, DEC);
+        // Serial.print(",");
+        // Serial.println(wr, DEC);
     
         // Move arm
         move(elbow, shoulder, wrist, z, g, wr);

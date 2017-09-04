@@ -9,20 +9,20 @@ end
 class Rucicka
   MIN_ELBOW = 19
   MIN_SHOULDER = 110
-  MIN_WRIST = 80
-  MIN_BASE = 70
-  MIN_GRIPPER = 40
-  MIN_WRIST_ROTATE = 86
+  MIN_WRIST = 30
+  MIN_BASE = 40
+  MIN_GRIPPER = 30
+  MIN_WRIST_ROTATE = 0
 
   MAX_ELBOW = 90
   MAX_SHOULDER = 170
-  MAX_WRIST = 100
-  MAX_BASE = 70
-  MAX_GRIPPER = 40
+  MAX_WRIST = 120
+  MAX_BASE = 100
+  MAX_GRIPPER = 110
   MAX_WRIST_ROTATE = 86
   
-  STEP_INTERVAL = 0.05
-  #STEP_INTERVAL = 1.1
+  WAIT_INTERVAL = 1.0
+  STEP_INTERVAL = 0.03
 
   def initialize
     print 'Connecting...'
@@ -30,6 +30,7 @@ class Rucicka
     puts 'OK'
 
     print 'Initializing...'
+    @random = Random.new
     define_presents
 
     @coords = {
@@ -75,12 +76,18 @@ class Rucicka
         reach_preset(:ninety)
       elsif s == 'default'
         reach_preset(:default)
+      elsif s == 'low'
+        reach_preset(:low)
+      elsif s == 'high'
+        reach_preset(:high)
       elsif s == 'min'
         reach_preset(:min)
       elsif s == 'max'
         reach_preset(:max)
       elsif s == 'park'
         reach_preset(:park)
+      elsif s == 'stand'
+        do_standing
       else
         send(constrain(@coords))
       end
@@ -89,11 +96,40 @@ class Rucicka
     puts 'Parking...'
     
     reach_preset(:park)
+    reach_preset(:park)
+    sleep(0.1)
 
     puts 'Exiting'
   end
 
 private
+  def do_standing
+    trap('INT') { throw :ctrl_c }
+    
+    catch :ctrl_c do
+      begin
+         while true
+            high_coords = get_random_coords
+            low_coords = get_random_coords
+         
+            reach(high_coords)
+            reach(high_coords)
+            sleep(WAIT_INTERVAL)
+            reach_preset(:default)
+            reach_preset(:default)
+            sleep(WAIT_INTERVAL)
+            reach(low_coords)
+            reach(low_coords)
+            sleep(WAIT_INTERVAL)
+         end
+      rescue Exception
+         puts "Not printed"
+      end
+    end
+    
+    trap('INT', 'DEFAULT')
+  end
+
   def define_presents
     @presets = {}
     @presets[:default] = {
@@ -103,6 +139,22 @@ private
       base: 70,
       gripper: 40,
       wrist_rotate: 86
+    }
+    @presets[:low] = {
+      elbow: 60,
+      shoulder: 110,
+      wrist: 120,
+      base: 50,
+      gripper: 30,
+      wrist_rotate: 86
+    }
+    @presets[:high] = {
+      elbow: 40,
+      shoulder: 130,
+      wrist: 30,
+      base: 90,
+      gripper: 90,
+      wrist_rotate: 0
     }
     @presets[:park] = {
       elbow: 19,
@@ -169,6 +221,17 @@ private
 
     puts "Done"
   end
+  
+  def get_random_coords
+    {
+      elbow: @random.rand(40...60),
+      shoulder: @random.rand(110...130),
+      wrist: @random.rand(30...120),
+      base: @random.rand(50...90),
+      gripper: @random.rand(30...90),
+      wrist_rotate: @random.rand(0...86)
+    }
+  end
 
   def reach_preset(key)
     reach(@presets[key])
@@ -216,8 +279,8 @@ private
     
     sleep STEP_INTERVAL
     
-    response = receive
-    puts "<-  #{response}"
+    # response = receive
+    # puts "<-  #{response}"
   end
   
   def receive
