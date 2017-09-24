@@ -27,7 +27,7 @@ const float B = 7.375;
 #endif
 
 #define MIN_ELBOW 19
-#define MIN_SHOULDER 110
+#define MIN_SHOULDER 50
 #define MIN_WRIST 30
 #define MIN_BASE 40
 #define MIN_GRIPPER 30
