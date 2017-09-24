@@ -1,4 +1,12 @@
 require 'rubyserial'
+require 'mqtt'
+
+MQTT_IP = '127.0.0.1'
+MQTT_TOPIC_IN = 'rucicka/move'
+MQTT_TOPIC_OUT = 'rucicka/status'
+
+M = 14.60500 # shoulder to elbow, 5,75" = 14.60500 cm = 0,14605 m
+N = 18.7325 # elbow to wrist, 7,375" = 18.7325 cm = 0,187325 m
 
 class Array
   def chr
@@ -6,9 +14,19 @@ class Array
   end
 end
 
+class Numeric
+  def radians
+    (self * Math::PI) / 180
+  end
+  
+  def degrees
+    (self * 180) / Math::PI
+  end
+end
+
 class Rucicka
   MIN_ELBOW = 19
-  MIN_SHOULDER = 110
+  MIN_SHOULDER = 50
   MIN_WRIST = 30
   MIN_BASE = 40
   MIN_GRIPPER = 30
@@ -25,11 +43,11 @@ class Rucicka
   STEP_INTERVAL = 0.03
 
   def initialize
-    print 'Connecting...'
+    print 'rucicka> Connecting...'
     @serial = Serial.new '/dev/tty.usbserial-A49B20I', 9600
     puts 'OK'
 
-    print 'Initializing...'
+    print 'rucicka> Initializing...'
     @random = Random.new
     define_presents
 
@@ -51,27 +69,27 @@ class Rucicka
     puts 'OK'
     
     response = receive
-    puts "<-  #{response}"
+    puts "serial> <-  #{response}"
     
     response = receive
-    puts "<-  #{response}"
+    puts "serial> <-  #{response}"
     
-    puts 'Moving to `park` position'
+    puts 'rucicka> Moving to `park` position'
     apply_preset(:park)
   end
 
   def run
-    puts 'I am ready!'
+    puts 'rucicka> I am ready!'
     
     while true
       puts
-      puts 'Type command (or `help`):'
+      puts 'rucicka> Type command (or `help`):'
       s = gets.strip
 
       if s == 'exit'
         break
       elsif s == 'help'
-        puts "I understand the following:\nexit, help, ninety, default, min, max, park"
+        puts "rucicka> I understand the following:\nexit, help, ninety, default, high, low, demo, mqtt, park"
       elsif s == 'ninety'
         reach_preset(:ninety)
       elsif s == 'default'
@@ -86,20 +104,26 @@ class Rucicka
         reach_preset(:max)
       elsif s == 'park'
         reach_preset(:park)
-      elsif s == 'stand'
+      elsif s == 'demo'
         do_standing
+      elsif s == 'mqtt'
+        do_mqtt
+      elsif s == 'pos'
+        do_pos
+      elsif s == 'manual'
+        do_manual
       else
-        send(constrain(@coords))
+        reach(@coords)
       end
     end
     
-    puts 'Parking...'
+    puts 'rucicka> Parking...'
     
     reach_preset(:park)
     reach_preset(:park)
     sleep(0.1)
 
-    puts 'Exiting'
+    puts 'rucicka> Exiting'
   end
 
 private
@@ -122,8 +146,117 @@ private
             reach(low_coords)
             sleep(WAIT_INTERVAL)
          end
-      rescue Exception
-         puts "Not printed"
+      rescue StandardError => e
+         puts "Error: #{e}"
+      end
+    end
+    
+    trap('INT', 'DEFAULT')
+  end
+  
+  def do_mqtt
+    trap('INT') { throw :ctrl_c }
+    
+    catch :ctrl_c do
+      begin
+        print 'rucicka> Connecting to MQTT...'
+        MQTT::Client.connect(MQTT_IP) do |client|
+          puts 'OK'
+          # From client to warehouse:
+          #   rucicka/move (send six comma separated int values as payload)
+          # From warehouse to client:
+          #   rucicka/status (will send six comma separated int values as payload)
+          client.get(MQTT_TOPIC_IN) do |topic, message|
+            puts "mqtt> <- #{topic}: #{message}"
+            coords = mqtt_parse(message)
+            payload = mqtt_format(coords)
+            client.publish(MQTT_TOPIC_OUT, payload, false)
+            puts "mqtt> -> #{MQTT_TOPIC_OUT}: #{payload}"
+            reach(coords)
+            sleep(WAIT_INTERVAL)
+          end
+        end
+      rescue StandardError => e
+         puts "Error: #{e}"
+      end
+    end
+    
+    trap('INT', 'DEFAULT')
+  end
+  
+  def do_pos
+    trap('INT') { throw :ctrl_c }
+    
+    catch :ctrl_c do
+      begin
+        while true do
+          puts 'rucicka> Enter desired position in format "ROT,HEIGHT,DIST":'
+          position = gets.strip.split(',')
+          rot = position[0].to_i
+          height = position[1].to_i
+          dist = position[2].to_i
+          p "#{rot},#{height},#{dist}"
+          
+          x = Math.sqrt((dist**2) + (height**2))
+          
+          if x >= (M + N)
+            puts 'rucicka> Desired position is unreachable!'
+            next
+          end
+          
+          s = 0.5 * (M + N + x)
+          small_shoulder = compute_angle(s, M, x).degrees
+          big_shoulder = Math.asin(height / x.to_f).degrees
+          elbow = compute_angle(s, M, N).degrees
+          gamma = compute_angle(s, x, N).degrees
+          #theta = Math.asin(dist / x.to_f).degrees
+          wrist = (90 - gamma)
+          
+          shoulder = small_shoulder + big_shoulder
+          
+          p "X = #{x}"
+          p "S = #{s}"
+          p "small_shoulder = #{small_shoulder} deg"
+          p "big_shoulder = #{big_shoulder} deg"
+          p "shoulder = #{shoulder} deg"
+          p "elbow = #{elbow} deg"
+          p "wrist = #{wrist} deg"
+          
+          # calibration correction
+          shoulder += 20
+          elbow -= 5
+          
+          input = "#{elbow},#{shoulder},#{wrist},#{rot},#{40},#{86}"
+          
+          coords = coords_parse(input)
+          p coords_format(coords)
+          reach(coords)
+        end
+      rescue StandardError => e
+         puts "Error: #{e}"
+      end
+    end
+    
+    trap('INT', 'DEFAULT')
+  end
+  
+  def compute_angle(s, k, l)
+    Math.asin(Math.sqrt(((s - k) * (s - l)) / (k * l))) * 2
+  end
+  
+  def do_manual
+    trap('INT') { throw :ctrl_c }
+    
+    catch :ctrl_c do
+      begin
+        while true do
+          puts 'rucicka> Enter desired servo rotation manually in format "ELBOW,SHOULDER,WRIST,BASE,GRIPPER,WRIST_ROTATE" in int in degrees (parking position is "19,170,80,70,40,86", default is "50,139,91,70,40,86"):'
+          coords = coords_parse(gets.strip)
+          p coords_format(coords)
+          reach(coords)
+        end
+      rescue StandardError => e
+         puts "Error: #{e}"
       end
     end
     
@@ -189,6 +322,10 @@ private
       wrist_rotate: MIN_WRIST_ROTATE
     }
   end
+  
+  def reach_position(rotation, height, distance)
+    
+  end
 
   def reach(new_coords)
     deltas = {}
@@ -201,10 +338,10 @@ private
 
     steps = deltas.values.max
 
-    puts "Performing #{steps} steps:"
+    puts "rucicka> Performing #{steps} steps:"
 
     steps.times do |i|
-      puts "Performing step #{i}/#{steps}"
+      puts "rucicka> Performing step #{i}/#{steps}"
 
       deltas.each do |key, value|
         if (deltas[key] != 0) && (i % (steps/deltas[key]) == 0)
@@ -219,7 +356,7 @@ private
       send(constrain(@coords))
     end
 
-    puts "Done"
+    puts "rucicka> Done"
   end
   
   def get_random_coords
@@ -263,10 +400,46 @@ private
 
     constrained
   end
+  
+  def mqtt_format(coords)
+    "#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}"
+  end
+  
+  def mqtt_parse(payload)
+    values = payload.split(',')
+    coords = {}
+    
+    coords[:elbow]        = values[0].to_i
+    coords[:shoulder]     = values[1].to_i
+    coords[:wrist]        = values[2].to_i
+    coords[:base]         = values[3].to_i
+    coords[:gripper]      = values[4].to_i
+    coords[:wrist_rotate] = values[5].to_i
+    
+    coords
+  end
+  
+  def coords_parse(payload)
+    values = payload.split(',')
+    coords = {}
+    
+    coords[:elbow]        = values[0].to_i
+    coords[:shoulder]     = values[1].to_i
+    coords[:wrist]        = values[2].to_i
+    coords[:base]         = values[3].to_i
+    coords[:gripper]      = values[4].to_i
+    coords[:wrist_rotate] = values[5].to_i
+    
+    coords
+  end
+  
+  def coords_format(coords)
+    "#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}"
+  end
 
   def send(coords)
     data = "<#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}>\n"
-    print "-> #{data}"
+    print "serial> -> #{data}"
     @serial.write(data)
     # @serial.write([
     #   coords[:elbow],
