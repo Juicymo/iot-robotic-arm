@@ -1,9 +1,12 @@
 require 'rubyserial'
 require 'mqtt'
 require_relative 'rucicka'
+require_relative 'lib'
 
 module Rucicka
   class Server
+    include Lib
+
     MIN_ELBOW = 19
     MIN_SHOULDER = 50
     MIN_WRIST = 30
@@ -19,7 +22,7 @@ module Rucicka
     MAX_WRIST_ROTATE = 86
 
     WAIT_INTERVAL = 1.0
-    STEP_INTERVAL = 0.05
+    STEP_INTERVAL = 0.04
 
     def initialize
       print 'rucicka> Connecting...'
@@ -181,40 +184,12 @@ module Rucicka
             rot = position[0].to_i
             height = position[1].to_i
             dist = position[2].to_i
-            p "#{rot},#{height},#{dist}"
 
-            x = Math.sqrt((dist**2) + (height**2))
-
-            if x >= (M + N)
+            coords = position_to_coords(rot, height, dist)
+            if coords.nil?
               puts 'rucicka> Desired position is unreachable!'
               next
             end
-
-            s = 0.5 * (M + N + x)
-            small_shoulder = compute_angle(s, M, x).degrees
-            big_shoulder = Math.asin(height / x.to_f).degrees
-            elbow = compute_angle(s, M, N).degrees
-            gamma = compute_angle(s, x, N).degrees
-            # theta = Math.asin(dist / x.to_f).degrees
-            wrist = (90 - gamma)
-
-            shoulder = small_shoulder + big_shoulder
-
-            p "X = #{x} cm"
-            p "S = #{s} cm2"
-            p "small_shoulder = #{small_shoulder} deg"
-            p "big_shoulder = #{big_shoulder} deg"
-            p "shoulder = #{shoulder} deg"
-            p "elbow = #{elbow} deg"
-            p "wrist = #{wrist} deg"
-
-            # calibration correction
-            shoulder += 20
-            elbow -= 5
-
-            input = "#{elbow},#{shoulder},#{wrist},#{rot},40,86"
-
-            coords = coords_parse(input)
             p coords_format(coords)
             reach(coords)
           end
@@ -224,10 +199,6 @@ module Rucicka
       end
 
       trap('INT', 'DEFAULT')
-    end
-
-    def compute_angle(s, k, l)
-      Math.asin(Math.sqrt(((s - k) * (s - l)) / (k * l))) * 2
     end
 
     def do_manual
@@ -308,8 +279,6 @@ module Rucicka
         wrist_rotate: MIN_WRIST_ROTATE
       }
     end
-
-    def reach_position(rotation, height, distance); end
 
     def reach(new_coords)
       deltas = {}
@@ -403,41 +372,12 @@ module Rucicka
       coords
     end
 
-    def coords_parse(payload)
-      values = payload.split(',')
-      coords = {}
-
-      coords[:elbow]        = values[0].to_i
-      coords[:shoulder]     = values[1].to_i
-      coords[:wrist]        = values[2].to_i
-      coords[:base]         = values[3].to_i
-      coords[:gripper]      = values[4].to_i
-      coords[:wrist_rotate] = values[5].to_i
-
-      coords
-    end
-
-    def coords_format(coords)
-      "#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}"
-    end
-
     def send(coords)
       data = "<#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}>\n"
       print "serial> -> #{data}"
       @serial.write(data)
-      # @serial.write([
-      #   coords[:elbow],
-      #   coords[:shoulder],
-      #   coords[:wrist],
-      #   coords[:base],
-      #   coords[:gripper],
-      #   coords[:wrist_rotate]
-      # ].chr.to_s)
 
       sleep STEP_INTERVAL
-
-      # response = receive
-      # puts "<-  #{response}"
     end
 
     def receive
