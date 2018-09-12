@@ -18,9 +18,27 @@ class Numeric
   def radians
     (self * Math::PI) / 180
   end
-  
+
   def degrees
     (self * 180) / Math::PI
+  end
+end
+
+module OS
+  def OS.windows?
+    (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+  end
+
+  def OS.mac?
+   (/darwin/ =~ RUBY_PLATFORM) != nil
+  end
+
+  def OS.unix?
+    !OS.windows?
+  end
+
+  def OS.linux?
+    OS.unix? and not OS.mac?
   end
 end
 
@@ -38,13 +56,19 @@ class Rucicka
   MAX_BASE = 100
   MAX_GRIPPER = 110
   MAX_WRIST_ROTATE = 86
-  
+
   WAIT_INTERVAL = 1.0
-  STEP_INTERVAL = 0.03
+  STEP_INTERVAL = 0.05
 
   def initialize
     print 'rucicka> Connecting...'
-    @serial = Serial.new '/dev/tty.usbserial-A49B20I', 9600
+    if OS.mac?
+      @serial = Serial.new '/dev/tty.usbserial-A49B20I', 9600
+    else
+
+      @serial = Serial.new '/dev/ttyUSB0', 9600
+    end
+
     puts 'OK'
 
     print 'rucicka> Initializing...'
@@ -211,23 +235,23 @@ private
           gamma = compute_angle(s, x, N).degrees
           #theta = Math.asin(dist / x.to_f).degrees
           wrist = (90 - gamma)
-          
+
           shoulder = small_shoulder + big_shoulder
-          
-          p "X = #{x}"
-          p "S = #{s}"
+
+          p "X = #{x} cm"
+          p "S = #{s} cm2"
           p "small_shoulder = #{small_shoulder} deg"
           p "big_shoulder = #{big_shoulder} deg"
           p "shoulder = #{shoulder} deg"
           p "elbow = #{elbow} deg"
           p "wrist = #{wrist} deg"
-          
+
           # calibration correction
           shoulder += 20
           elbow -= 5
-          
+
           input = "#{elbow},#{shoulder},#{wrist},#{rot},#{40},#{86}"
-          
+
           coords = coords_parse(input)
           p coords_format(coords)
           reach(coords)
