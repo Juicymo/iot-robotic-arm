@@ -20,7 +20,7 @@ module Rucicka
     def position_to_coords(rotation, height, distance, gripper, wrist_rotate)
       p "#{rotation},#{height},#{distance}"
 
-      x = Math.sqrt((distance**2) + (height**2))
+      x = Math.sqrt((distance ** 2) + (height ** 2))
 
       if x >= (M + N)
         # puts 'rucicka> Desired position is unreachable!'
@@ -37,32 +37,34 @@ module Rucicka
 
       shoulder = small_shoulder + big_shoulder
 
-      p "X = #{x} cm"
-      p "S = #{s} cm2"
-      p "small_shoulder = #{small_shoulder} deg"
-      p "big_shoulder = #{big_shoulder} deg"
-      p "shoulder = #{shoulder} deg"
-      p "elbow = #{elbow} deg"
-      p "wrist = #{wrist} deg"
+      unless ENV['DEBUG'].nil?
+        p "X = #{x} cm"
+        p "S = #{s} cm2"
+        p "small_shoulder = #{small_shoulder} deg"
+        p "big_shoulder = #{big_shoulder} deg"
+        p "shoulder = #{shoulder} deg"
+        p "elbow = #{elbow} deg"
+        p "wrist = #{wrist} deg"
+      end
 
       # calibration correction
       shoulder += 20
       elbow -= 5
 
-      input = "#{elbow},#{shoulder},#{wrist},#{rotation},#{gripper},#{wrist_rotate}"
+      input = "#{elbow},#{shoulder},#{80},#{rotation},#{gripper},#{wrist_rotate}"
 
-      coords_parse(input)
+      constrain(coords_parse(input))
     end
 
     def coords_parse(payload)
       values = payload.split(',')
       coords = {}
 
-      coords[:elbow]        = values[0].to_i
-      coords[:shoulder]     = values[1].to_i
-      coords[:wrist]        = values[2].to_i
-      coords[:base]         = values[3].to_i
-      coords[:gripper]      = values[4].to_i
+      coords[:elbow] = values[0].to_i
+      coords[:shoulder] = values[1].to_i
+      coords[:wrist] = values[2].to_i
+      coords[:base] = values[3].to_i
+      coords[:gripper] = values[4].to_i
       coords[:wrist_rotate] = values[5].to_i
 
       coords
@@ -101,11 +103,11 @@ module Rucicka
       values = payload.split(',')
       coords = {}
 
-      coords[:elbow]        = values[0].to_i
-      coords[:shoulder]     = values[1].to_i
-      coords[:wrist]        = values[2].to_i
-      coords[:base]         = values[3].to_i
-      coords[:gripper]      = values[4].to_i
+      coords[:elbow] = values[0].to_i
+      coords[:shoulder] = values[1].to_i
+      coords[:wrist] = values[2].to_i
+      coords[:base] = values[3].to_i
+      coords[:gripper] = values[4].to_i
       coords[:wrist_rotate] = values[5].to_i
 
       coords
@@ -154,19 +156,19 @@ module Rucicka
           wrist_rotate: 86
       }
       @presets[:max] = {
-          elbow:        MAX_ELBOW,
-          shoulder:     MAX_SHOULDER,
-          wrist:        MAX_WRIST,
-          base:         MAX_BASE,
-          gripper:      MAX_GRIPPER,
+          elbow: MAX_ELBOW,
+          shoulder: MAX_SHOULDER,
+          wrist: MAX_WRIST,
+          base: MAX_BASE,
+          gripper: MAX_GRIPPER,
           wrist_rotate: MAX_WRIST_ROTATE
       }
       @presets[:min] = {
-          elbow:        MIN_ELBOW,
-          shoulder:     MIN_SHOULDER,
-          wrist:        MIN_WRIST,
-          base:         MIN_BASE,
-          gripper:      MIN_GRIPPER,
+          elbow: MIN_ELBOW,
+          shoulder: MIN_SHOULDER,
+          wrist: MIN_WRIST,
+          base: MIN_BASE,
+          gripper: MIN_GRIPPER,
           wrist_rotate: MIN_WRIST_ROTATE
       }
     end
