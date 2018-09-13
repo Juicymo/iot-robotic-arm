@@ -17,9 +17,8 @@ module Rucicka
     WAIT_INTERVAL = 1.0
     STEP_INTERVAL = 0.04
 
-    def position_to_coords(rotation, height, distance, gripper, wrist_rotate)
-      p "#{rotation},#{height},#{distance}"
-
+    def position_to_coords(rotation, height, distance, gripper, wrist_rotate, wrist = nil)
+      # p "#{rotation},#{height},#{distance}"
       x = Math.sqrt((distance ** 2) + (height ** 2))
 
       if x >= (M + N)
@@ -33,7 +32,7 @@ module Rucicka
       elbow = compute_angle(s, M, N).degrees
       gamma = compute_angle(s, x, N).degrees
       # theta = Math.asin(distance / x.to_f).degrees
-      wrist = (90 - gamma)
+      wrist ||= 90
 
       shoulder = small_shoulder + big_shoulder
 
@@ -51,7 +50,7 @@ module Rucicka
       shoulder += 20
       elbow -= 5
 
-      input = "#{elbow},#{shoulder},#{80},#{rotation},#{gripper},#{wrist_rotate}"
+      input = "#{elbow},#{shoulder},#{wrist},#{rotation},#{gripper},#{wrist_rotate}"
 
       constrain(coords_parse(input))
     end

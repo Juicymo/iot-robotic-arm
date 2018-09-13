@@ -145,6 +145,7 @@ module Rucicka
               # client.publish(MQTT_TOPIC_OUT, payload, false)
               # puts "mqtt> -> #{MQTT_TOPIC_OUT}: #{payload}"
               reach(constrain(coords))
+              reach(constrain(coords))
               payload = mqtt_format(@coords)
               client.publish(MQTT_TOPIC_OUT, payload, false)
               puts "mqtt> -> #{MQTT_TOPIC_OUT}: #{payload}"

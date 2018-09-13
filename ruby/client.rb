@@ -7,49 +7,95 @@ require 'dotenv/load'
 module Rucicka
   class Client
     include Lib
+    attr_accessor :step, :position
 
-    def initialize
+    MAX_HEIGHT = 12
+    MIN_HEIGHT = 3
+    MAX_DISTANCE = 25
+    MIN_DISTANCE = 5
+    GRIPPEN_GRAB = 69
+
+    def initialize(step = nil)
+      @step = step
       @client = MQTT::Client.connect(MQTT_IP)
       @client.subscribe(MQTT_TOPIC_OUT)
       define_presents
       @park_position = {
           rotation: 75,
-          height: 3,
-          distance: 5,
+          height: 6,
+          distance: 3,
           gripper: 40,
-          wrist_rotate: 86
+          wrist_rotate: 86,
+          wrist: 80
       }
       park
     end
 
-    def forward(step = 1)
-      @position[:distance] += step
+    def forward(step = nil)
+      step = set_step step
+      @position[:distance] += step * 2
       move
     end
 
-    def left(step = 1)
-      @position[:rotation] += step
+    def left(step = nil)
+      step = set_step step
+      @position[:rotation] += step * 2
       move
     end
 
-    def right(step = 1)
+    def right(step = nil)
+      step = set_step step
       @position[:rotation] -= step
       move
     end
 
-    def back(step = 1)
+    def back(step = nil)
+      step = set_step step
       @position[:distance] -= step
       move
     end
 
-    def up(step = 1)
+    def up(step = nil)
+      step = set_step step
       @position[:height] += step
       move
     end
 
-    def down(step = 1)
+    def down(step = nil)
+      step = set_step step
       @position[:height] -= step
       move
+    end
+
+    def wrist_left(step = nil)
+      step = set_step step
+      @position[:wrist_rotate] -= step
+      move
+    end
+
+    def wrist_right(step = nil)
+      step = set_step step
+      @position[:wrist_rotate] += step
+      move
+    end
+
+    def wrist_up(step = nil)
+      step = set_step step
+      @position[:wrist] -= step * 10
+      move
+    end
+
+    def wrist_down(step = nil)
+      step = set_step step
+      @position[:wrist] += step * 10
+      move
+    end
+
+
+    def set_step(step)
+      step ||= @step
+      step ||= 1
+      step
     end
 
     def manual
@@ -76,12 +122,76 @@ module Rucicka
       p coords_format(@coords)
     end
 
-    private
+    def max
+      @position[:distance] = MAX_DISTANCE
+      @position[:height] = MAX_HEIGHT
+      move
+    end
+
+    def min
+      @position[:distance] = MIN_DISTANCE
+      @position[:height] = MIN_HEIGHT
+      move
+    end
+
+    def max_min
+      @position[:distance] = MAX_DISTANCE
+      @position[:height] = MIN_HEIGHT
+      move
+    end
+
+    def min_max
+      @position[:distance] = MIN_DISTANCE
+      @position[:height] = MAX_HEIGHT
+      move
+    end
+
+    def gripper_on
+      @position[:gripper] = GRIPPEN_GRAB
+      move
+    end
+
+    def gripper_off
+      @position[:gripper] = MIN_GRIPPER
+      move
+    end
+
+    def gripper_close
+      step = set_step step
+      @position[:gripper] += step
+      move
+    end
+
+    def gripper_open(step = nil)
+      step = set_step step
+      @position[:gripper] -= step
+      move
+    end
 
     def move
       return if @position.nil?
+      @position = constrain_position(@position)
       coords = position_to_coords @position
-      send(coords)
+      if coords.nil?
+        p 'Unreacheable position!'
+        puts "position: #{format_position @position}"
+      else
+        send(coords)
+      end
+    end
+    private
+
+
+    def constrain_position(position)
+      constrained = {}
+      constrained[:rotation] = bound(position[:rotation], MIN_BASE, MAX_BASE)
+      constrained[:height] = bound(position[:height], MIN_HEIGHT, MAX_HEIGHT)
+      constrained[:distance] = bound(position[:distance], MIN_DISTANCE, MAX_DISTANCE)
+      constrained[:gripper] = bound(position[:gripper], MIN_GRIPPER, MAX_GRIPPER)
+      constrained[:wrist_rotate] = bound(position[:wrist_rotate], MIN_WRIST_ROTATE, MAX_WRIST_ROTATE)
+      constrained[:wrist] = bound(position[:wrist], MIN_WRIST, MAX_WRIST)
+
+      constrained
     end
 
     def send(coords)
@@ -92,7 +202,12 @@ module Rucicka
     end
 
     def position_to_coords(position)
-      super(position[:rotation], position[:height], position[:distance], position[:gripper], position[:wrist_rotate])
+      puts format_position position
+      super(position[:rotation], position[:height], position[:distance], position[:gripper], position[:wrist_rotate], position[:wrist])
+    end
+
+    def format_position(position)
+      "\n rotation: #{position[:rotation]}\n height: #{position[:height]}\n distance: #{position[:distance]} \n gripper: #{position[:gripper]} \n wrist_rotate: #{position[:wrist_rotate]} \n wrist: #{position[:wrist]}"
     end
 
     # Reads keypresses from the user including 2 and 3 escape character sequences.
@@ -116,7 +231,8 @@ module Rucicka
     # http://www.alecjacobson.com/weblog/?p=75
     def map_key_to_move
       c = read_char
-
+      step = @step
+      step ||= 1
       case c
       when " "
         puts "SPACE"
@@ -133,18 +249,30 @@ module Rucicka
       when "\e"
         puts "ESCAPE"
         :stop
-      when "\e[A"
-        up 3
-      when "\e[B"
-        down 3
-      when "\e[C"
-        right 3
-      when "\e[D"
-        left 3
-      when "+"
-        forward 3
-      when "-"
-        back 3
+      when "\e[A", "w"
+        up step
+      when "\e[B", "s"
+        down step
+      when "\e[C", "d"
+        right step
+      when "\e[D", "a"
+        left step
+      when "+", "r"
+        forward step
+      when "-", "f"
+        back step
+      when "q"
+        gripper_on
+      when "e"
+        gripper_off
+      when 'j'
+        wrist_left
+      when 'l'
+        wrist_right
+      when 'i'
+        wrist_up
+      when 'k'
+        wrist_down
       when "\177"
         puts "BACKSPACE"
         :stop
