@@ -13,7 +13,7 @@ module Rucicka
     MIN_HEIGHT = 3
     MAX_DISTANCE = 25
     MIN_DISTANCE = 5
-    GRIPPEN_GRAB = 69
+    GRIPPER_GRAB = 69
 
     def initialize(step = nil)
       @step = step
@@ -147,7 +147,7 @@ module Rucicka
     end
 
     def gripper_on
-      @position[:gripper] = GRIPPEN_GRAB
+      @position[:gripper] = GRIPPER_GRAB
       move
     end
 
