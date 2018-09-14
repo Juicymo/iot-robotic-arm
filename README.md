@@ -11,24 +11,29 @@
 - make cahnges - optional
 - click on `Upload`
 ## Architecture overview
-```plantuml
+
+![Alt text](https://g.gravizo.com/source/architecture?https%3A%2F%2Fraw.githubusercontent.com%2FJuicymo%2Fiot-robotic-arm%2Fmaster%2FREADME.md)
+<details>
+<summary></summary>
+architecture
 @startuml
-package "Ruby" {
-  [Server]
-  [Client]
-  [ArmLib]
-}
+package "Ruby" {;
+  [Server];
+  [Client];
+  [ArmLib];
+};
 
-package "Arduino" {
-  [rucicka.ino] as ar
-}
+package "Arduino" {;
+  [rucicka.ino] as ar;
+};
 
-[Server] <.. [Client] : MQTT
-[ArmLib] <|-- [Client]
-[ArmLib] <|-- [Server]
+[Server] <.. [Client] : MQTT;
+[ArmLib] <|-- [Client];
+[ArmLib] <|-- [Server];
 
-[Server] ..> HW : Serial link
-ar <-- HW
+[Server] ..> HW : Serial link;
+ar <.. HW;
 
 @enduml
-```
+architecture
+</details>
