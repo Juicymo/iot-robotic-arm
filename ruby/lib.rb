@@ -2,14 +2,14 @@ module Rucicka
   module Lib
     MIN_ELBOW = 19
     MIN_SHOULDER = 50
-    MIN_WRIST = 30
-    MIN_BASE = 40
+    MIN_WRIST = 0
+    MIN_BASE = 20
     MIN_GRIPPER = 30
     MIN_WRIST_ROTATE = 0
 
     MAX_ELBOW = 90
     MAX_SHOULDER = 170
-    MAX_WRIST = 120
+    MAX_WRIST = 180
     MAX_BASE = 100
     MAX_GRIPPER = 110
     MAX_WRIST_ROTATE = 86
@@ -17,22 +17,23 @@ module Rucicka
     WAIT_INTERVAL = 1.0
     STEP_INTERVAL = 0.04
 
-    def position_to_coords(rotation, height, distance, gripper, wrist_rotate, wrist = nil)
-      # p "#{rotation},#{height},#{distance}"
-      x = Math.sqrt((distance ** 2) + (height ** 2))
+    GRIPPER_LENGTH = 1.2 #cm
 
-      if x >= (M + N)
+    def position_to_coords(rotation, height, distance, gripper, wrist_rotate, wrist = nil)
+      wrist ||= 90
+      gripper_adjustment = gripper_adjustment(distance, height, wrist)
+      h = height + gripper_adjustment unless gripper_adjustment.nil?
+      x = Math.sqrt((distance ** 2) + (h ** 2))
+      p "rot:#{rotation}, height:#{h}, dist: #{distance}, wrist: #{wrist}"
+      if x >= (M + N) || gripper_adjustment.nil?
         # puts 'rucicka> Desired position is unreachable!'
         return
       end
 
       s = 0.5 * (M + N + x)
-      small_shoulder = compute_angle(s, M, x).degrees
-      big_shoulder = Math.asin(height / x.to_f).degrees
       elbow = compute_angle(s, M, N).degrees
-      gamma = compute_angle(s, x, N).degrees
-      # theta = Math.asin(distance / x.to_f).degrees
-      wrist ||= 90
+      small_shoulder = compute_angle(s, M, x).degrees
+      big_shoulder = Math.asin(h / x.to_f).degrees
 
       shoulder = small_shoulder + big_shoulder
 
@@ -53,6 +54,31 @@ module Rucicka
       input = "#{elbow},#{shoulder},#{wrist},#{rotation},#{gripper},#{wrist_rotate}"
 
       constrain(coords_parse(input))
+    end
+
+    def gripper_adjustment(distance, height, wrist)
+      x = Math.sqrt((distance ** 2) + (height ** 2))
+      if x >= (M + N)
+        return
+      end
+
+      s = 0.5 * (M + N + x)
+
+      gamma = compute_angle(s, x, N).degrees
+      epsilon = Math.asin(distance / x.to_f).degrees
+      alpha = 360 - (wrist + 90)
+      tau = alpha - gamma - epsilon
+      a = (Math.cos(tau.radians) * GRIPPER_LENGTH)
+      a = tau > 90 ? 0 : a.abs
+      a = tau <= 0 ? GRIPPER_LENGTH : a.abs
+      p "X = #{x} cm"
+      p "S = #{s} cm2"
+      p "alpha = #{alpha}°"
+      p "gamma = #{gamma}°"
+      p "epsilon = #{epsilon}°"
+      p "cos(tau) = #{Math.cos(tau)}°"
+      puts "Adjustment: \n tau: #{tau}° \n adjust: #{a}cm"
+      a
     end
 
     def coords_parse(payload)

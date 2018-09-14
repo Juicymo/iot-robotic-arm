@@ -33,7 +33,7 @@ module Rucicka
 
     def forward(step = nil)
       step = set_step step
-      @position[:distance] += step * 2
+      @position[:distance] += step
       move
     end
 
@@ -45,7 +45,7 @@ module Rucicka
 
     def right(step = nil)
       step = set_step step
-      @position[:rotation] -= step
+      @position[:rotation] -= step * 2
       move
     end
 
@@ -69,13 +69,13 @@ module Rucicka
 
     def wrist_left(step = nil)
       step = set_step step
-      @position[:wrist_rotate] -= step
+      @position[:wrist_rotate] -= step * 10
       move
     end
 
     def wrist_right(step = nil)
       step = set_step step
-      @position[:wrist_rotate] += step
+      @position[:wrist_rotate] += step * 10
       move
     end
 
