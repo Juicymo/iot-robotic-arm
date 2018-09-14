@@ -3,14 +3,14 @@ module Rucicka
     MIN_ELBOW = 19
     MIN_SHOULDER = 50
     MIN_WRIST = 0
-    MIN_BASE = 20
+    MIN_BASE = 40
     MIN_GRIPPER = 30
     MIN_WRIST_ROTATE = 0
 
     MAX_ELBOW = 90
     MAX_SHOULDER = 170
     MAX_WRIST = 180
-    MAX_BASE = 100
+    MAX_BASE = 120
     MAX_GRIPPER = 110
     MAX_WRIST_ROTATE = 86
 
