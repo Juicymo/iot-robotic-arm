@@ -28,14 +28,14 @@ const float B = 7.375;
 
 #define MIN_ELBOW 19
 #define MIN_SHOULDER 50
-#define MIN_WRIST 30
-#define MIN_BASE 40
+#define MIN_WRIST 0
+#define MIN_BASE 20
 #define MIN_GRIPPER 30
 #define MIN_WRIST_ROTATE 0
 
 #define MAX_ELBOW 90
 #define MAX_SHOULDER 170
-#define MAX_WRIST 120
+#define MAX_WRIST 180
 #define MAX_BASE 100
 #define MAX_GRIPPER 110
 #define MAX_WRIST_ROTATE 86
