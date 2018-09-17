@@ -12,8 +12,26 @@ To install ruby on our system, download and install [RVM](https://rvm.io/rvm/ins
 - `bundle install`
 
 And you are good to go!
+#### Server
+To run server on your computer, you need to install MQTT broker. We suggest [Mosquito](https://mosquitto.org/download/).
+If you skip this test, you will not be able to use the Client library.
+After install connect the arm to your computer and run `ruby server.rb` in command line.
+You should see something like this:
+```
+rucicka> Connecting...OK
+rucicka> Initializing...OK
+serial> <-  
+serial> <-  
+rucicka> Moving to `park` position
+serial> -> <19,170,80,75,40,86>
+rucicka> I am ready!
+
+rucicka> Type command (or `help`):
+
+``` 
+You can try multiple modes available in `help` command, but we need to type `mqtt` to run client.
 #### Client
-To start, create new file in `ruby` folder with `.rb` suffix. We will use `example.rb`.
+After your server is running, create new file in `ruby` folder with `.rb` suffix. We will use `example.rb`.
 To use the client, start your file with `require_relative "client"`.
 Then create new instance of `Rucicka::Client` class with `client = Rucicka::Client.new`.
 Your file should look like this:
