@@ -3,6 +3,16 @@
 Goal of this Codelab is to harness the power of robotic arm. To achieve this, we prepared Ruby client which comunicates with Ruby server using MQTT protocol. Server then comunicates with the arm via serial link.
 Your goal is to move companion cube from point A to the drop zone.
 ### Get started
+#### Ruby
+To install ruby on our system, download and install [RVM](https://rvm.io/rvm/install) and then type in our command line:
+- `rvm install 2.5.1` - this will take a while
+- `rvm use 2.5.1`
+- open ruby folder in this repository
+- `gem install bundler`
+- `bundle install`
+
+And you are good to go!
+#### Client
 To start, create new file in `ruby` folder with `.rb` suffix. We will use `example.rb`.
 To use the client, start your file with `require_relative "client"`.
 Then create new instance of `Rucicka::Client` class with `client = Rucicka::Client.new`.
