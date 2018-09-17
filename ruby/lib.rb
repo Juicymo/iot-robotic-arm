@@ -14,10 +14,10 @@ module Rucicka
     MAX_GRIPPER = 110
     MAX_WRIST_ROTATE = 86
 
-    WAIT_INTERVAL = 1.0
-    STEP_INTERVAL = 0.04
+    WAIT_INTERVAL = 0.7
+    STEP_INTERVAL = 0.025
 
-    GRIPPER_LENGTH = 1.2 #cm
+    GRIPPER_LENGTH = 1.1 #cm
 
     def position_to_coords(rotation, height, distance, gripper, wrist_rotate, wrist = nil)
       wrist ||= 90
@@ -71,13 +71,15 @@ module Rucicka
       a = (Math.cos(tau.radians) * GRIPPER_LENGTH)
       a = tau > 90 ? 0 : a.abs
       a = tau <= 0 ? GRIPPER_LENGTH : a.abs
-      p "X = #{x} cm"
-      p "S = #{s} cm2"
-      p "alpha = #{alpha}°"
-      p "gamma = #{gamma}°"
-      p "epsilon = #{epsilon}°"
-      p "cos(tau) = #{Math.cos(tau)}°"
-      puts "Adjustment: \n tau: #{tau}° \n adjust: #{a}cm"
+      unless ENV['DEBUG'].nil?
+        p "X = #{x} cm"
+        p "S = #{s} cm2"
+        p "alpha = #{alpha}°"
+        p "gamma = #{gamma}°"
+        p "epsilon = #{epsilon}°"
+        p "cos(tau) = #{Math.cos(tau)}°"
+        puts "Adjustment: \n tau: #{tau}° \n adjust: #{a}cm"
+      end
       a
     end
 

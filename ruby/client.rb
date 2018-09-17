@@ -10,8 +10,8 @@ module Rucicka
     attr_accessor :step, :position
 
     MAX_HEIGHT = 12
-    MIN_HEIGHT = 3
-    MAX_DISTANCE = 25
+    MIN_HEIGHT = 2.5
+    MAX_DISTANCE = 33
     MIN_DISTANCE = 5
     GRIPPER_GRAB = 69
 
@@ -22,7 +22,7 @@ module Rucicka
       define_presents
       @park_position = {
           rotation: 75,
-          height: 6,
+          height: 3,
           distance: 3,
           gripper: 40,
           wrist_rotate: 86,
@@ -39,7 +39,7 @@ module Rucicka
 
     def left(step = nil)
       step = set_step step
-      @position[:rotation] += step * 2
+      @position[:rotation]  += step * 2
       move
     end
 
@@ -91,7 +91,6 @@ module Rucicka
       move
     end
 
-
     def set_step(step)
       step ||= @step
       step ||= 1
@@ -115,10 +114,24 @@ module Rucicka
       trap('INT', 'DEFAULT')
     end
 
+    def set_moves
+      if block_given?
+        @dont_move = true
+        yield
+        @dont_move = false
+        move
+      end
+    end
+
     def park
-      coords = position_to_coords @park_position
+      park = @park_position.dup
+      unless @position.nil?
+        park[:gripper] = @position[:gripper]
+      end
+      coords = position_to_coords park
       send(coords)
-      @position = @park_position.dup
+      send(coords)
+      @position = park
       p coords_format(@coords)
     end
 
@@ -170,6 +183,7 @@ module Rucicka
 
     def move
       return if @position.nil?
+      return if @dont_move
       @position = constrain_position(@position)
       coords = position_to_coords @position
       if coords.nil?
