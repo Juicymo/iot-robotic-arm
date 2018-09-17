@@ -130,7 +130,6 @@ module Rucicka
       end
       coords = position_to_coords park
       send(coords)
-      send(coords)
       @position = park
       p coords_format(@coords)
     end
