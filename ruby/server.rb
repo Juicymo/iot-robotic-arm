@@ -225,13 +225,24 @@ module Rucicka
       steps.times do |i|
         puts "rucicka> Performing step #{i}/#{steps}"
 
+        # deltas.each do |key, _value|
+        #   if (deltas[key] != 0) && (i % (steps / deltas[key]) == 0)
+        #     if directions[key] == :down
+        #       @coords[key] += 1
+        #     else # directions[key] == :down
+        #       @coords[key] -= 1
+        #     end
+        #   end
+        # end
+
         deltas.each do |key, _value|
-          if (deltas[key] != 0) && (i % (steps / deltas[key]) == 0)
+          if deltas[key] != 0
             if directions[key] == :down
               @coords[key] += 1
             else # directions[key] == :down
               @coords[key] -= 1
             end
+            deltas[key] -= 1
           end
         end
 
