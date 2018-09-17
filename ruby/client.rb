@@ -9,7 +9,7 @@ module Rucicka
     include Lib
     attr_accessor :step, :position
 
-    MAX_HEIGHT = 12
+    MAX_HEIGHT = 25
     MIN_HEIGHT = 2.5
     MAX_DISTANCE = 33
     MIN_DISTANCE = 5
@@ -24,7 +24,7 @@ module Rucicka
           rotation: 75,
           height: 3,
           distance: 3,
-          gripper: 40,
+          gripper: 30,
           wrist_rotate: 86,
           wrist: 80
       }

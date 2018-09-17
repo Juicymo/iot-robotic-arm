@@ -22,7 +22,8 @@ module Rucicka
     def position_to_coords(rotation, height, distance, gripper, wrist_rotate, wrist = nil)
       wrist ||= 90
       gripper_adjustment = gripper_adjustment(distance, height, wrist)
-      h = height + gripper_adjustment unless gripper_adjustment.nil?
+      h = height
+      h += gripper_adjustment unless gripper_adjustment.nil?
       x = Math.sqrt((distance ** 2) + (h ** 2))
       p "rot:#{rotation}, height:#{h}, dist: #{distance}, wrist: #{wrist}"
       if x >= (M + N) || gripper_adjustment.nil?
