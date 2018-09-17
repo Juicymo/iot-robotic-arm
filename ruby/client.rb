@@ -10,10 +10,10 @@ module Rucicka
     attr_accessor :step, :position
 
     MAX_HEIGHT = 25
-    MIN_HEIGHT = 2.5
+    MIN_HEIGHT = 2.2
     MAX_DISTANCE = 33
     MIN_DISTANCE = 5
-    GRIPPER_GRAB = 69
+    GRIPPER_GRAB = 70
 
     def initialize(step = nil)
       @step = step
