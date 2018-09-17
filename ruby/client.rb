@@ -7,7 +7,6 @@ require 'dotenv/load'
 module Rucicka
   class Client
     include Lib
-    attr_accessor :step, :position
 
     MAX_HEIGHT = 25
     MIN_HEIGHT = 2.2
@@ -91,12 +90,6 @@ module Rucicka
       move
     end
 
-    def set_step(step)
-      step ||= @step
-      step ||= 1
-      step
-    end
-
     def manual
       trap('INT') { throw :ctrl_c }
 
@@ -134,6 +127,30 @@ module Rucicka
       p coords_format(@coords)
     end
 
+    def gripper_on
+      @position[:gripper] = GRIPPER_GRAB
+      move
+    end
+
+    def gripper_off
+      @position[:gripper] = MIN_GRIPPER
+      move
+    end
+
+    def gripper_close
+      step = set_step step
+      @position[:gripper] += step
+      move
+    end
+
+    def gripper_open(step = nil)
+      step = set_step step
+      @position[:gripper] -= step
+      move
+    end
+
+    private
+
     def max
       @position[:distance] = MAX_DISTANCE
       @position[:height] = MAX_HEIGHT
@@ -158,28 +175,6 @@ module Rucicka
       move
     end
 
-    def gripper_on
-      @position[:gripper] = GRIPPER_GRAB
-      move
-    end
-
-    def gripper_off
-      @position[:gripper] = MIN_GRIPPER
-      move
-    end
-
-    def gripper_close
-      step = set_step step
-      @position[:gripper] += step
-      move
-    end
-
-    def gripper_open(step = nil)
-      step = set_step step
-      @position[:gripper] -= step
-      move
-    end
-
     def move
       return if @position.nil?
       return if @dont_move
@@ -192,8 +187,12 @@ module Rucicka
         send(coords)
       end
     end
-    private
 
+    def set_step(step)
+      step ||= @step
+      step ||= 1
+      step
+    end
 
     def constrain_position(position)
       constrained = {}
