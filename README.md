@@ -8,7 +8,7 @@
    - `Board` to `Arduino Duemilanove or Diecimila`
    - `Processor` to `ATmega328P`
    - `Port` to first available
-- make cahnges - optional
+- make changes - optional
 - click on `Upload`
 ## Architecture overview
 
