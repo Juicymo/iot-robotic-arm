@@ -14,7 +14,7 @@ To install ruby on our system, download and install [RVM](https://rvm.io/rvm/ins
 And you are good to go!
 #### Server
 To run server on your computer, you need to install MQTT broker. We suggest [Mosquito](https://mosquitto.org/download/).
-If you skip this test, you will not be able to use the Client library.
+If you skip this step, you will not be able to use the Client library.
 After install connect the arm to your computer and run `ruby server.rb` in command line.
 You should see something like this:
 ```
