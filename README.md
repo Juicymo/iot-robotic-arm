@@ -38,7 +38,6 @@ Your file should look like this:
 ```Ruby
 require_relative 'client'
 
-client = Rucicka::Client.new
 ```
 ### Available commands
 `Rucicka::Client` has these available commands:

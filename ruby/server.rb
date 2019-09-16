@@ -23,12 +23,12 @@ module Rucicka
       define_presents
 
       @coords = {
-          elbow: 50,
-          shoulder: 140,
-          wrist: 90,
-          base: 70,
-          gripper: 40,
-          wrist_rotate: 86
+        elbow: 50,
+        shoulder: 140,
+        wrist: 90,
+        base: 70,
+        gripper: 40,
+        wrist_rotate: 86
       }
 
       sleep 1
@@ -209,7 +209,14 @@ module Rucicka
       trap('INT', 'DEFAULT')
     end
 
+    def new_reach(new_coords)
+      move(constrain(new_coords))
+      @coords = new_coords
+    end
+
     def reach(new_coords)
+      return new_reach(new_coords)
+
       deltas = {}
       directions = {}
 
@@ -246,7 +253,7 @@ module Rucicka
           end
         end
 
-        send(constrain(@coords))
+        move(constrain(@coords))
       end
 
       puts 'rucicka> Done'
@@ -254,12 +261,12 @@ module Rucicka
 
     def get_random_coords
       {
-          elbow: @random.rand(40...60),
-          shoulder: @random.rand(110...130),
-          wrist: @random.rand(30...120),
-          base: @random.rand(50...90),
-          gripper: @random.rand(30...90),
-          wrist_rotate: @random.rand(0...86)
+        elbow: @random.rand(40...60),
+        shoulder: @random.rand(110...130),
+        wrist: @random.rand(30...120),
+        base: @random.rand(50...90),
+        gripper: @random.rand(30...90),
+        wrist_rotate: @random.rand(0...86)
       }
     end
 
@@ -274,10 +281,10 @@ module Rucicka
         @coords[key] = value
       end
 
-      send(constrain(@coords))
+      move(constrain(@coords))
     end
 
-    def send(coords)
+    def move(coords)
       data = "<#{coords[:elbow]},#{coords[:shoulder]},#{coords[:wrist]},#{coords[:base]},#{coords[:gripper]},#{coords[:wrist_rotate]}>\n"
       print "serial> -> #{data}"
       @serial.write(data)
