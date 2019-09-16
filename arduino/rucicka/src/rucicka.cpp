@@ -26,7 +26,6 @@ const float A = 5.75;
 const float B = 7.375;
 #endif
 
-#define PROVIDE_ONLY_LINEAR_MOVEMENT
 #define MIN_ELBOW 19
 #define MIN_SHOULDER 50
 #define MIN_WRIST 0
@@ -58,6 +57,7 @@ const float B = 7.375;
 // ServoEasing
 #define SERVOS_SPEED 100 // Dangerous speeds - 1, 20, 50, 87
                          // Safe speeds - 75, 100, 450, 550   
+#define PROVIDE_ONLY_LINEAR_MOVEMENT
 
 // Radians to Degrees constant
 const float rtod = 57.295779;
