@@ -1,6 +1,5 @@
 #include "Arduino.h"
 
-#include "Servo.h"
 #include "ServoEasing.h"
 #include <math.h>
 
@@ -27,6 +26,7 @@ const float A = 5.75;
 const float B = 7.375;
 #endif
 
+#define PROVIDE_ONLY_LINEAR_MOVEMENT
 #define MIN_ELBOW 19
 #define MIN_SHOULDER 50
 #define MIN_WRIST 0
@@ -54,6 +54,10 @@ const float B = 7.375;
 // Onboard Speaker
 #define Speaker_pin 5
 #define PIN_LED 13
+
+// ServoEasing
+#define SERVOS_SPEED 100 // Dangerous speeds - 1, 20, 50, 87
+                         // Safe speeds - 75, 100, 450, 550   
 
 // Radians to Degrees constant
 const float rtod = 57.295779;
@@ -116,6 +120,8 @@ void setup() {
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
 
+  setSpeedForAllServos(SERVOS_SPEED);
+
   int elbow = 19;
   int shoulder = 170;
   int wrist = 80;
@@ -124,13 +130,12 @@ void setup() {
   int wr = 86;
   
   move(elbow, shoulder, wrist, z, g, wr);
-  move(85, 110, 90, 70, 40, 86);
-  
   while(!Serial.available()) { 
-    delay(2000);
-    move(elbow, shoulder, wrist, z, g, wr);
+    Serial.print("While loop\n");
     delay(2000);
     move(85, 110, 90, 70, 40, 86);
+    delay(2000);
+    move(elbow, shoulder, wrist, z, g, wr);
   }
   
   // Display position
@@ -150,6 +155,7 @@ void setup() {
   move(elbow, shoulder, wrist, z, g, wr);
   
   Serial.println("Arm is Ready");
+  exit(0);
 }
 
 void recvWithStartEndMarkers() {
