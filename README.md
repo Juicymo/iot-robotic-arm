@@ -5,8 +5,8 @@ Your goal is to move companion cube from point A to the drop zone.
 ### Get started
 #### Ruby
 To install ruby on our system, download and install [RVM](https://rvm.io/rvm/install) and then type in our command line:
-- `rvm install 2.5.1` - this will take a while
-- `rvm use 2.5.1`
+- `rvm install 2.6.3` - this will take a while
+- `rvm use 2.6.3`
 - open ruby folder in this repository
 - `gem install bundler`
 - `bundle install`
