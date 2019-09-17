@@ -121,3 +121,8 @@ ar <.. HW;
 @enduml
 architecture
 </details>
+
+# Codelab 2019
+## Easy Mode
+
+## Hard Mode

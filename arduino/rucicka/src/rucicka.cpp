@@ -58,7 +58,7 @@ const float B = 7.375;
 #define SERVOS_SPEED 75 // Dangerous speeds - 1, 20, 50, 87
                          // Safe speeds - 75, 100, 450, 550   
 // #define PROVIDE_ONLY_LINEAR_MOVEMENT
-#define SERVO_DURATION 1250
+#define SERVO_DURATION 2000
 // Radians to Degrees constant
 const float rtod = 57.295779;
 
@@ -133,15 +133,16 @@ void setup() {
   int z = 75;
   int g = 40;
   int wr = 86;
+
+  Base.write(z);
+  Shldr.write(shoulder);
+  Elb.write(180 - elbow);
+  Wrist.write(180 - wrist);
+  Gripper.write(g);
+  WristR.write(wr);
   
   // move(elbow, shoulder, wrist, z, g, wr);
-  while(!Serial.available()) { 
-    // Serial.print("While loop\n");
-    // delay(2000);
-    // move(85, 110, 90, 100, 40, 86);
-    // delay(2000);
-    // move(elbow, shoulder, wrist, z, g, wr);
-  }
+  while(!Serial.available()) { }
   
   // Display position
   // Serial.print(elbow, DEC);
@@ -158,9 +159,8 @@ void setup() {
   
   // Move arm
   move(elbow, shoulder, wrist, z, g, wr);
-  
+  // 
   // Serial.println("Arm is Ready");
-  // exit(0);
 }
 
 void recvWithStartEndMarkers() {
@@ -257,7 +257,6 @@ void handleNewData() {
         // Serial.print(g, DEC);
         // Serial.print(",");
         // Serial.println(wr, DEC);
-    
         // Move arm
         move(elbow, shoulder, wrist, z, g, wr);
         
