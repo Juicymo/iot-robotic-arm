@@ -58,7 +58,7 @@ const float B = 7.375;
 #define SERVOS_SPEED 75 // Dangerous speeds - 1, 20, 50, 87
                          // Safe speeds - 75, 100, 450, 550   
 // #define PROVIDE_ONLY_LINEAR_MOVEMENT
-#define SERVO_DURATION 2000
+#define SERVO_DURATION 1250
 // Radians to Degrees constant
 const float rtod = 57.295779;
 
@@ -90,7 +90,7 @@ int move(int elbow, int shoulder, int wrist, int z, int g, int wr) {
 #endif
 
   Wrist.setEaseToD(180 - wrist, SERVO_DURATION/2);
-  Base.setEaseToD(z, SERVO_DURATION);
+  Base.setEaseToD(z, SERVO_DURATION / 2);
   WristR.setEaseToD(wr, SERVO_DURATION/2);
   
 #ifndef FSRG
