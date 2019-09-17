@@ -26,7 +26,7 @@ module Rucicka
         elbow: 50,
         shoulder: 140,
         wrist: 90,
-        base: 70,
+        base: 75,
         gripper: 40,
         wrist_rotate: 86
       }
@@ -39,11 +39,11 @@ module Rucicka
 
       puts 'OK'
 
-      response = receive
-      puts "serial> <-  #{response}"
-
-      response = receive
-      puts "serial> <-  #{response}"
+      # response = receive
+      # puts "serial> <-  #{response}"
+      #
+      # response = receive
+      # puts "serial> <-  #{response}"
 
       puts 'rucicka> Moving to `park` position'
       apply_preset(:park)
@@ -90,7 +90,6 @@ module Rucicka
 
       puts 'rucicka> Parking...'
 
-      reach_preset(:park)
       reach_preset(:park)
       sleep(0.1)
 
@@ -209,53 +208,9 @@ module Rucicka
       trap('INT', 'DEFAULT')
     end
 
-    def new_reach(new_coords)
-      @coords = constrain(new_coords)
-      move(@coords)
-    end
-
     def reach(new_coords)
-      return new_reach(new_coords)
-
-      deltas = {}
-      directions = {}
-
-      new_coords.each do |key, value|
-        deltas[key] = (@coords[key] - value).abs
-        directions[key] = (@coords[key] - value) > 0 ? :up : :down
-      end
-
-      steps = deltas.values.max
-
-      puts "rucicka> Performing #{steps} steps:"
-
-      steps.times do |i|
-        puts "rucicka> Performing step #{i}/#{steps}"
-
-        # deltas.each do |key, _value|
-        #   if (deltas[key] != 0) && (i % (steps / deltas[key]) == 0)
-        #     if directions[key] == :down
-        #       @coords[key] += 1
-        #     else # directions[key] == :down
-        #       @coords[key] -= 1
-        #     end
-        #   end
-        # end
-
-        deltas.each do |key, _value|
-          if deltas[key] != 0
-            if directions[key] == :down
-              @coords[key] += 1
-            else # directions[key] == :down
-              @coords[key] -= 1
-            end
-            deltas[key] -= 1
-          end
-        end
-
-        move(constrain(@coords))
-      end
-
+      puts "rucicka> Reaching #{coords_format(new_coords)}"
+      move(constrain(new_coords))
       puts 'rucicka> Done'
     end
 

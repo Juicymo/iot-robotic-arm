@@ -15,7 +15,7 @@ module Rucicka
     MAX_WRIST_ROTATE = 86
 
     WAIT_INTERVAL = 0.15
-    STEP_INTERVAL = 1
+    STEP_INTERVAL = 0.5
 
     GRIPPER_LENGTH = 1.1 #cm
 

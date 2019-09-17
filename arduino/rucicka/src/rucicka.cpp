@@ -55,10 +55,10 @@ const float B = 7.375;
 #define PIN_LED 13
 
 // ServoEasing
-#define SERVOS_SPEED 100 // Dangerous speeds - 1, 20, 50, 87
+#define SERVOS_SPEED 75 // Dangerous speeds - 1, 20, 50, 87
                          // Safe speeds - 75, 100, 450, 550   
-#define PROVIDE_ONLY_LINEAR_MOVEMENT
-
+// #define PROVIDE_ONLY_LINEAR_MOVEMENT
+#define SERVO_DURATION 1250
 // Radians to Degrees constant
 const float rtod = 57.295779;
 
@@ -71,8 +71,8 @@ ServoEasing Gripper;
 ServoEasing WristR;
 
 // elbow shoulder wrist base gripper wrist_rotate
-// 85 110 90 70 40 86 = pravouhly
-// 50 140 90 70 40 86 = default
+// 85 110 90 75 40 86 = pravouhly
+// 50 140 90 75 40 86 = default
 
 struct Result {
   float elbow;
@@ -85,16 +85,16 @@ int move(int elbow, int shoulder, int wrist, int z, int g, int wr) {
   Elb.writeMicroseconds(map(180 - elbow, 0, 180, 900, 2100));
   Shldr.writeMicroseconds(map(shoulder, 0, 180, 900, 2100));
 #else
-  Elb.setEaseTo(180 - elbow);
-  Shldr.setEaseTo(shoulder);
+  Elb.setEaseToD(180 - elbow, SERVO_DURATION);
+  Shldr.setEaseToD(shoulder, SERVO_DURATION);
 #endif
 
-  Wrist.setEaseTo(180 - wrist);
-  Base.setEaseTo(z);
-  WristR.setEaseTo(wr);
+  Wrist.setEaseToD(180 - wrist, SERVO_DURATION/2);
+  Base.setEaseToD(z, SERVO_DURATION);
+  WristR.setEaseToD(wr, SERVO_DURATION/2);
   
 #ifndef FSRG
-  Gripper.setEaseTo(g);
+  Gripper.setEaseToD(g, SERVO_DURATION/2);
 #endif
   synchronizeAllServosStartAndWaitForAllServosToStop();
   return 0;
@@ -120,12 +120,17 @@ void setup() {
   Gripper.attach(Gripper_pin);
   WristR.attach(WristR_pin);
 
-  setSpeedForAllServos(SERVOS_SPEED);
+  Base.setEasingType(EASE_CUBIC_IN_OUT);
+  Shldr.setEasingType(EASE_CUBIC_IN_OUT);
+  Elb.setEasingType(EASE_CUBIC_IN_OUT);
+  Wrist.setEasingType(EASE_CUBIC_IN_OUT);
+  Gripper.setEasingType(EASE_CUBIC_IN_OUT);
+  WristR.setEasingType(EASE_CUBIC_IN_OUT);
 
   int elbow = 19;
   int shoulder = 170;
   int wrist = 80;
-  int z = 70;
+  int z = 75;
   int g = 40;
   int wr = 86;
   
@@ -133,29 +138,29 @@ void setup() {
   while(!Serial.available()) { 
     // Serial.print("While loop\n");
     // delay(2000);
-    // move(85, 110, 90, 70, 40, 86);
+    // move(85, 110, 90, 100, 40, 86);
     // delay(2000);
     // move(elbow, shoulder, wrist, z, g, wr);
   }
   
   // Display position
-  Serial.print(elbow, DEC);
-  Serial.print(" ");
-  Serial.print(shoulder, DEC);
-  Serial.print(" ");
-  Serial.print(wrist, DEC);
-  Serial.print(" ");
-  Serial.print(z, DEC);
-  Serial.print(" ");
-  Serial.print(g, DEC);
-  Serial.print(" ");
-  Serial.println(wr, DEC);
+  // Serial.print(elbow, DEC);
+  // Serial.print(" ");
+  // Serial.print(shoulder, DEC);
+  // Serial.print(" ");
+  // Serial.print(wrist, DEC);
+  // Serial.print(" ");
+  // Serial.print(z, DEC);
+  // Serial.print(" ");
+  // Serial.print(g, DEC);
+  // Serial.print(" ");
+  // Serial.println(wr, DEC);
   
   // Move arm
-  move(elbow, shoulder, wrist, z, g, wr);
+  // move(elbow, shoulder, wrist, z, g, wr);
   
-  Serial.println("Arm is Ready");
-  exit(0);
+  // Serial.println("Arm is Ready");
+  // exit(0);
 }
 
 void recvWithStartEndMarkers() {
@@ -211,8 +216,8 @@ void handleNewData() {
     if (newData == true) {
         digitalWrite(PIN_LED, HIGH);
         
-        //Serial.print("// ");
-        //Serial.println(receivedChars);
+        // Serial.print("// ");
+        // Serial.println(receivedChars);
         
         int raw_elbow     = atoi(subStr(receivedChars, ",", 1));
         int raw_shoulder  = atoi(subStr(receivedChars, ",", 2));
@@ -241,17 +246,17 @@ void handleNewData() {
         int wr        = constrain(raw_wr, MIN_WRIST_ROTATE, MAX_WRIST_ROTATE);
         
         // Display position
-        Serial.print(elbow, DEC);
-        Serial.print(",");
-        Serial.print(shoulder, DEC);
-        Serial.print(",");
-        Serial.print(wrist, DEC);
-        Serial.print(",");
-        Serial.print(z, DEC);
-        Serial.print(",");
-        Serial.print(g, DEC);
-        Serial.print(",");
-        Serial.println(wr, DEC);
+        // Serial.print(elbow, DEC);
+        // Serial.print(",");
+        // Serial.print(shoulder, DEC);
+        // Serial.print(",");
+        // Serial.print(wrist, DEC);
+        // Serial.print(",");
+        // Serial.print(z, DEC);
+        // Serial.print(",");
+        // Serial.print(g, DEC);
+        // Serial.print(",");
+        // Serial.println(wr, DEC);
     
         // Move arm
         move(elbow, shoulder, wrist, z, g, wr);
