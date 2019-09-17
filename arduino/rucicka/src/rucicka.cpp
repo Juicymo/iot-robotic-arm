@@ -131,11 +131,11 @@ void setup() {
   
   move(elbow, shoulder, wrist, z, g, wr);
   while(!Serial.available()) { 
-    Serial.print("While loop\n");
-    delay(2000);
-    move(85, 110, 90, 70, 40, 86);
-    delay(2000);
-    move(elbow, shoulder, wrist, z, g, wr);
+    // Serial.print("While loop\n");
+    // delay(2000);
+    // move(85, 110, 90, 70, 40, 86);
+    // delay(2000);
+    // move(elbow, shoulder, wrist, z, g, wr);
   }
   
   // Display position

@@ -210,8 +210,8 @@ module Rucicka
     end
 
     def new_reach(new_coords)
-      move(constrain(new_coords))
-      @coords = new_coords
+      @coords = constrain(new_coords)
+      move(@coords)
     end
 
     def reach(new_coords)
