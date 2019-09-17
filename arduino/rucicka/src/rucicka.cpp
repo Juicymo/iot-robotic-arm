@@ -134,7 +134,7 @@ void setup() {
   int g = 40;
   int wr = 86;
   
-  move(elbow, shoulder, wrist, z, g, wr);
+  // move(elbow, shoulder, wrist, z, g, wr);
   while(!Serial.available()) { 
     // Serial.print("While loop\n");
     // delay(2000);
@@ -157,7 +157,7 @@ void setup() {
   // Serial.println(wr, DEC);
   
   // Move arm
-  // move(elbow, shoulder, wrist, z, g, wr);
+  move(elbow, shoulder, wrist, z, g, wr);
   
   // Serial.println("Arm is Ready");
   // exit(0);
