@@ -1,7 +1,8 @@
 # IoT Robotic Arm
 ## Codelab
-Goal of this Codelab is to harness the power of robotic arm. To achieve this, we prepared Ruby client which comunicates with Ruby server using MQTT protocol. Server then comunicates with the arm via serial link.
-Your goal is to move companion cube from point A to the drop zone.
+Goal of this Codelab is to harness the power of robotic arm. To achieve this, we prepared Ruby client which communicates with Ruby server using MQTT protocol. Server then communicates with the arm via serial link.
+Your goal is to grab a stamp and press it on to clean paper.
+Does this seem too easy for you? Go ahead and try draw a line, circle, square or what-ever shape you want with the stamp!
 ### Get started
 #### Ruby
 To install ruby on our system, download and install [RVM](https://rvm.io/rvm/install) and then type in our command line:
