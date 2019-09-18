@@ -159,6 +159,7 @@ void setup() {
   
   // Move arm
   move(elbow, shoulder, wrist, z, g, wr);
+  tone(Speaker_pin, 1000, 250);
   // 
   // Serial.println("Arm is Ready");
 }
