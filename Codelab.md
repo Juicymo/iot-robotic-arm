@@ -1,7 +1,9 @@
 # IoT Robotic Arm
 ## Codelab
 Goal of this Codelab is to harness the power of robotic arm. To achieve this, we prepared Ruby client which communicates with Ruby server using MQTT protocol. Server then communicates with the arm via serial link.
+
 Your goal is to grab a stamp and press it on to clean paper.
+
 Does this seem too easy for you? Go ahead and try draw a line, circle, square or what-ever shape you want with the stamp!
 ### Get started
 #### Client
