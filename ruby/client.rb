@@ -9,10 +9,10 @@ module Rucicka
     include Lib
 
     MAX_HEIGHT = 25
-    MIN_HEIGHT = 1.5
+    MIN_HEIGHT = 0.5
     MAX_DISTANCE = 33
     MIN_DISTANCE = 5
-    GRIPPER_GRAB = 75
+    GRIPPER_GRAB = 76
 
     def initialize(step = nil)
       @step = step
