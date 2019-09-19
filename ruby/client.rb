@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mqtt'
 require_relative 'lib'
 require_relative 'rucicka'
@@ -20,12 +22,12 @@ module Rucicka
       @client.subscribe(MQTT_TOPIC_OUT)
       define_presents
       @park_position = {
-          rotation: 75,
-          height: 3,
-          distance: 3,
-          gripper: 30,
-          wrist_rotate: 86,
-          wrist: 80
+        rotation: 75,
+        height: 3,
+        distance: 3,
+        gripper: 30,
+        wrist_rotate: 86,
+        wrist: 80
       }
       park
     end
@@ -38,7 +40,7 @@ module Rucicka
 
     def left(step = nil)
       step = set_step step
-      @position[:rotation]  += step * 2
+      @position[:rotation] += step * 2
       move
     end
 
@@ -94,14 +96,12 @@ module Rucicka
       trap('INT') { throw :ctrl_c }
 
       catch :ctrl_c do
-        begin
-          loop do
-            stop = map_key_to_move
-            throw :ctrl_c if stop == :stop
-          end
-        rescue StandardError => e
-          puts "Error: #{e}"
+        loop do
+          stop = map_key_to_move
+          throw :ctrl_c if stop == :stop
         end
+      rescue StandardError => e
+        puts "Error: #{e}"
       end
 
       trap('INT', 'DEFAULT')
@@ -118,13 +118,11 @@ module Rucicka
 
     def park
       park = @park_position.dup
-      unless @position.nil?
-        park[:gripper] = @position[:gripper]
-      end
+      park[:gripper] = @position[:gripper] unless @position.nil?
       coords = position_to_coords park
-      send(coords)
+      send_coords(coords)
       @position = park
-      p coords_format(@coords)
+      log coords_format(@coords)
     end
 
     def gripper_on
@@ -137,7 +135,7 @@ module Rucicka
       move
     end
 
-    def gripper_close
+    def gripper_close(step = nil)
       step = set_step step
       @position[:gripper] += step
       move
@@ -178,13 +176,14 @@ module Rucicka
     def move
       return if @position.nil?
       return if @dont_move
+
       @position = constrain_position(@position)
       coords = position_to_coords @position
       if coords.nil?
-        p 'Unreacheable position!'
-        puts "position: #{format_position @position}"
+        log 'Unreacheable position!'
+        log "position: #{format_position @position}"
       else
-        send(coords)
+        send_coords(coords)
       end
     end
 
@@ -206,7 +205,7 @@ module Rucicka
       constrained
     end
 
-    def send(coords)
+    def send_coords(coords)
       coords = mqtt_format(coords)
       @client.publish(MQTT_TOPIC_IN, coords)
       _, message = @client.get
@@ -228,9 +227,17 @@ module Rucicka
       STDIN.raw!
 
       input = STDIN.getc.chr
-      if input == "\e" then
-        input << STDIN.read_nonblock(3) rescue nil
-        input << STDIN.read_nonblock(2) rescue nil
+      if input == "\e"
+        begin
+          input << STDIN.read_nonblock(3)
+        rescue StandardError
+          nil
+        end
+        begin
+          input << STDIN.read_nonblock(2)
+        rescue StandardError
+          nil
+        end
       end
     ensure
       STDIN.echo = true
@@ -246,37 +253,41 @@ module Rucicka
       step = @step
       step ||= 1
       case c
-      when " "
-        puts "SPACE"
+      when ' '
+        puts 'SPACE'
         park
       when "\t"
-        puts "TAB"
+        puts 'TAB'
         :stop
       when "\r"
-        puts "RETURN"
+        puts 'RETURN'
         :stop
       when "\n"
-        puts "LINE FEED"
+        puts 'LINE FEED'
         :stop
       when "\e"
-        puts "ESCAPE"
+        puts 'ESCAPE'
         :stop
-      when "\e[A", "w"
+      when "\e[A", 'w'
         up step
-      when "\e[B", "s"
+      when "\e[B", 's'
         down step
-      when "\e[C", "d"
+      when "\e[C", 'd'
         right step
-      when "\e[D", "a"
+      when "\e[D", 'a'
         left step
-      when "+", "r"
+      when '+', 'r'
         forward step
-      when "-", "f"
+      when '-', 'f'
         back step
-      when "q"
+      when 'q'
         gripper_on
-      when "e"
+      when 'e'
         gripper_off
+      when ','
+        gripper_close(5)
+      when '.'
+        gripper_open(5)
       when 'j'
         wrist_left
       when 'l'
@@ -286,24 +297,32 @@ module Rucicka
       when 'k'
         wrist_down
       when "\177"
-        puts "BACKSPACE"
+        log 'BACKSPACE', true
         :stop
       when "\004"
-        puts "DELETE"
+        log 'DELETE', true
         :stop
       when "\e[3~"
-        puts "ALTERNATE DELETE"
+        log 'ALTERNATE DELETE', true
         :stop
       when "\u0003"
-        puts "CONTROL-C"
+        log 'CONTROL-C', true
         :stop
       when /^.$/
-        puts "SINGLE CHAR HIT: #{c.inspect}"
+        log "SINGLE CHAR HIT: #{c.inspect}"
         :stop
       else
-        puts "SOMETHING ELSE: #{c.inspect}"
+        log "SOMETHING ELSE: #{c.inspect}"
         :stop
       end
+    end
+
+    private
+
+    def log(msg, debug = false)
+      return if debug && !ENV['DEBUG'].present?
+
+      puts "rucicka> #{msg}"
     end
   end
 end
