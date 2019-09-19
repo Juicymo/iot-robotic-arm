@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'mqtt'
 require_relative 'lib'
 require_relative 'rucicka'
