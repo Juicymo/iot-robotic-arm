@@ -11,7 +11,7 @@ module Rucicka
     include Lib
 
     MAX_HEIGHT = 25
-    MIN_HEIGHT = 0.5
+    MIN_HEIGHT = 2.2
     MAX_DISTANCE = 33
     MIN_DISTANCE = 5
     GRIPPER_GRAB = 76
