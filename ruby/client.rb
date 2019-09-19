@@ -214,7 +214,7 @@ module Rucicka
     end
 
     def position_to_coords(position)
-      puts format_position position
+      log format_position position
       super(position[:rotation], position[:height], position[:distance], position[:gripper], position[:wrist_rotate], position[:wrist])
     end
 
