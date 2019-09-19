@@ -121,6 +121,7 @@ module Rucicka
       park[:gripper] = @position[:gripper] unless @position.nil?
       coords = position_to_coords park
       send_coords(coords)
+      send_coords(coords)
       @position = park
       log coords_format(@coords)
     end
