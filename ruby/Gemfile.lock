@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     dotenv (2.5.0)
-    ffi (1.9.18)
+    ffi (1.11.1)
     mqtt (0.4.0)
     rubyserial (0.4.0)
       ffi (~> 1.9, >= 1.9.3)
